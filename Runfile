@@ -1,0 +1,9 @@
+#!/bin/bash
+source ${RF_DIR:-~/.Runfile}/Runfile.template # MUST START OF FILE # dont change line below, get RF_DIR from ENV or using default value
+##regison USER ============================================================================================================
+
+
+
+
+##endregion USER ===========================================================================================================
+TIMEFORMAT="Task completed in %3lR" && time __fn_list_check ${@} # MUST END OF FILE # default action when call this file without parameter

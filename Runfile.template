@@ -1,0 +1,255 @@
+#!/bin/bash
+RF_DIR=${RF_DIR:-~/.Runfile} # get RF_DIR from ENV or using default value
+
+column_width=${RF_COLUMN_WIDTH:-30}
+column_number=${RF_COLUMN_NUMB:-3}
+
+# source ${RF_DIR}/plugins/log_1
+# source ${RF_DIR}/plugins/sed_1
+# only include file end with _1 (enable), _0 (disable)
+for f in ${RF_DIR}/plugins/*_1; do
+	source ${f}
+done
+
+# vars example, feel free to delete
+# rf_example_var1="my var content"
+# rf_example_var2="${rf_example_var1} of var 2"
+# rf_example_var3=3
+# rf_example_var4=$((${rf_example_var3} + 4))
+
+rf_example() {
+	rf_log_prefix="build"
+	rf_log_title "Example" "
+Description:
+	Description about build function run build arg1 arg2 arg3
+Params:
+	\$1: param 1 detail
+		2tab
+			3tab
+				4tab
+	\$2: param 2 detail
+	\$3: param 3 detail
+Note:
+	Some note about this fn
+"
+}
+
+help() {
+	local str="sh -c \"\$(curl -fsSL https://gitlab.com/ryda20/runfile/-/raw/master/install.sh)\""
+	rf_log_title "Installation" "${str}"
+
+	local str="
+$0 <task> <args>
+	or simple (by alias run=$0):
+run <task> <args>
+"
+	rf_log_title "Usage" "${str}"
+	#
+	_fn_list "build-in function"
+}
+
+
+# __fn_list_check will check input command and validation before execute
+# dont change this function name to ensure the app works after you update.
+# if you want to change, make sure change in Runfile (time __fn_list_check), too
+__fn_list_check() {
+	fist_cmd=${1}
+
+	# if no input
+	if [[ ${#fist_cmd} -eq 0 ]]; then
+		# nothing to check -> show all functions
+		_fn_list
+		exit 0
+	fi
+
+	local __fn_list=$(echo $(declare -F) | sed 's/declare -f //g')
+	# check ${fist_cmd} to see if it available in fn_list
+	# note: we add space before and after __fn_list and first_cmd to make sure we are compairing full word
+	# because we will go wrong if:
+	# ex: __fn_list = "abc edf ght dgr"
+	# Case : first_cmd = ab or df or gr,... -> command will valid (because we use *)
+	# Fix:
+	# __fn_list = " abc edf ght dgr "
+	# first_cmd = " search " =>
+	# " abc " -> valid, but
+	# " ab " -> not valid
+	if [[ " ${__fn_list} " != *" ${fist_cmd} "* ]]; then
+		echo "command \`${@}\` is not valid"
+		exit 0
+	fi
+
+	#echo "command \`${@}\` is valid, so, call the command"
+	${@}
+}
+
+# rf_check_update will check if it available in new verion
+rf_check_update() {
+	rf_log_prefix="update"
+	rf_log "function is not implemented yet"
+}
+
+# _rf_update run update runfile
+_rf_update() {
+	sh ~/.Runfile/install.sh update
+}
+
+# _fn_list_format format functions in column mode
+_fn_list_format() {
+	local fname=${1:-}
+	# idx is a number of functions for easy view, and use to detect to add new line
+	local idx=${2:-1}
+	#
+	local end_of_array=${3:-""}
+	#
+	local __resultvar=${4:-""}
+	#
+	local mod=$((idx % column_number))
+	local newline=""
+
+	if [[ ${mod} -eq 0 ]] && [[ ${idx} -gt 0 ]]; then
+		# mod == 0 -> end of row.
+		# we add '#' char at the end of current row and at the start of new row
+		newline="#\n# "
+	fi
+
+	local paddingWidth=${column_width}
+	if [[ ${mod} -eq 0 ]]; then
+		# -3 because we added 3 chars on newline
+		paddingWidth=$((column_width - 3)) 
+	fi
+
+	# +1 because idx, we start it at 1 but array start at 0
+	idx=$(( idx + 1 ))
+	mod=$(( idx % column_number ))
+	# 
+	# checking the last items in which column index. For what? to calculate the paddingWidth
+	# We can calculate with modulo: mod = last_idx % colNumb
+	# So, the last item will be in column number `mod`. Ex:
+	# mod = 0 -> last item in 	last column 		-> padding  = column_width 
+	# 		1 -> 				first column 		-> 			= column_width + column_width * (column_number - mod)
+	#		2 ->				second column 		-> 			= column_width + column_width * (column_number - mod)
+	#		3 ->				third column 		-> 			= _same_above_
+	# ......
+	if [[ "${end_of_array}" == "end_of_array" ]]; then
+		if [[ ${mod} != 0 ]]; then
+			# +3 because: we was added 3 chars at newline (#\n# )
+			# +padding_column_number: number of columns need to padding
+			padding_column_number=$(( column_number - mod ))
+			paddingWidth=$(( 3 + column_width + column_width * padding_column_number + padding_column_number ))
+		fi
+		# echo "mod: ${mod}, paddingWidth: ${paddingWidth}, fname: ${fname}"
+		str=$(printf "%2d) %-${paddingWidth}s#" ${idx} ${fname})
+	else
+		str=$(printf "%2d) %-${paddingWidth}s" ${idx} ${fname})
+	fi
+	
+	str="${newline}${str}"
+	# return value by echo and get with x=$(func)
+	# echo "${str}"
+	eval $__resultvar="'$str'"
+}
+
+# _fn_list show list of available functions
+_fn_list() {
+	# get_fn:
+	#	user_fn:	only get user function
+	#	else:		only get build in function, start with rf_
+	local get_fn=${1:-"user_fn"}
+
+	local colNumb=${RF_COLUMN_NUMB:-3}
+	# list functions, start first row with '# '
+	local fnList="# "
+	local newline=""
+	#
+	# index is a number for easy know how many functions available
+	#
+	# index for build-in functions
+	local idx=0
+	# declare -F return all function name:
+	# example of return look like:
+	# declare -F fname1
+	local _rf_fn_list=$(echo $(declare -F) | sed 's/declare -f //g')
+	local arr=""
+	# filter to new array
+	for f in ${_rf_fn_list}; do
+		fname=${f}
+		# skip for hidden (internal, start with _) function
+		if [[ "${fname:0:1}" == "_" ]]; then
+			continue
+		fi
+		
+		if [[ "${get_fn}" == "user_fn" ]]; then
+			# get user fn only
+			if [[ "${fname:0:3}" != "rf_" ]]; then
+				arr="${arr} ${fname}"
+			fi
+		else
+			# get build-in fn only
+			if [[ "${fname:0:3}" == "rf_" ]]; then
+				arr="${arr} ${fname}"
+			fi
+		fi
+	done
+	# make array from string "x y z" because we can't get total items, so, convert it to array
+	arr2=(${arr})
+	total_items="${#arr2[@]}"
+	for f in ${arr}; do
+		fname=${f}
+		if [[ ${idx} == $(( total_items - 1)) ]]; then
+			_fn_list_format ${fname} ${idx} "end_of_array" str_out
+		else
+			_fn_list_format ${fname} ${idx} "" str_out
+		fi
+		idx=$(( idx + 1 ))
+		fnList="${fnList}${str_out}"
+	done
+
+	local title="User Function List"
+	if [[ "${get_fn}" != "user_fn" ]]; then
+		title="Build-in Function List"
+	fi
+
+	rf_log_title "${title}" "${fnList}" "no_format"
+}
+
+# _fn_list_all show list of available functions
+_fn_list_all() {
+	local colNumb=${RF_COLUMN_NUMB:-3}
+	# list functions of build-in (rf_), start with '# '
+	local fnListTf="# "
+	# list functions of user, start with '# '
+	local fnListUser="# "
+	local newline=""
+	#
+	# index is a number for easy know how many functions available
+	#
+	# index for build-in functions
+	local idxTf=0
+	# index for user functions
+	local idxUser=0
+	local _rf_fn_list=$(echo $(declare -F) | sed 's/declare -f //g')
+	# declare -F return all function name:
+	# example of return look like:
+	# declare -F fname1
+	for f in ${_rf_fn_list}; do
+		fname=${f}
+		# skip for hidden (internal, start with _) function
+		if [[ "${fname:0:1}" == "_" ]]; then
+			continue
+		fi
+
+		# if first 3 chars equal rf_ -> add function to rf function list, else, add to user function list
+		if [[ "${fname:0:3}" == "rf_" ]]; then
+			str_out=$(_fn_list_format ${fname} ${idxTf})
+			idxTf=$(( idxTf + 1 ))
+			fnListTf="${fnListTf}${str_out}"
+		else
+			str_out=$(_fn_list_format ${fname} ${idxUser})
+			fnListUser="${fnListUser}${str_out}"
+			idxUser=$(( idxUser + 1 ))
+		fi
+	done
+
+	rf_log_title "Runfile Fn(s)" "${fnListTf}" "no_format"
+	rf_log_title "Your Tasks" "${fnListUser}" "no_format"
+}
