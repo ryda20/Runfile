@@ -23,7 +23,7 @@ To see all your define tasks, just type `run` from terminal
 ```sh
     $ run
     #### user fn(s) ####=================================================================================#
-    #  1) build                       2) help                           3) start                         #
+    #  1) help                                                                                           #
     #====================================================================================================#
     Task completed in 0m0.008s
 
@@ -35,16 +35,52 @@ To see all your define tasks, just type `run` from terminal
     #====================================================================================================#
 
     #### runfile fn(s) ####==============================================================================#
-    #  1) rf_check_update             2) rf_example                     3) rf_log                        #
-    #  4) rf_log_header               5) rf_log_title                   6) rf_sed_padding                #
-    #  7) rf_sed_remove_all_occur     8) rf_sed_remove_comment_line     9) rf_sed_remove_empty_line      #
-    # 10) rf_sed_replace_all_occur   11) rf_sed_replace_first_occur                                      #
+    #  1) rf_check_update             2) rf_ex1                         3) rf_ex2                        #
+    #  4) rf_log                      5) rf_log_header                  6) rf_log_title                  #
+    #  7) rf_sed_padding              8) rf_sed_remove_all_occur        9) rf_sed_remove_comment_line    #
+    # 10) rf_sed_remove_empty_line   11) rf_sed_replace_all_occur      12) rf_sed_replace_first_occur    #
     #====================================================================================================#
 
     #### user fn(s) ####=================================================================================#
-    #  1) build                       2) help                           3) start                         #
+    #  1) help                                                                                           #
     #====================================================================================================#
     Task completed in 0m0.027s
+```
+
+Available examples:
+```sh
+    $ run rf_ex1
+    #### Example ####====================================================================================#
+    # Description:                                                                                       #
+    #       Description about build function run build arg1 arg2 arg3                                    #
+    # Params:                                                                                            #
+    #       $1: param 1 detail                                                                           #
+    #               2tab                                                                                 #
+    #                       3tab                                                                         #
+    #                               4tab                                                                 #
+    #       $2: param 2 detail                                                                           #
+    #       $3: param 3 detail                                                                           #
+    # Note:                                                                                              #
+    #       Some note about this fn                                                                      #
+    #====================================================================================================#
+    Task completed in 0m0.014s
+
+    $ run rf_ex2
+    #### available cmd(s) ####===========================================================================#
+    #       rf_ex2 gen [, go_out_dir = pb [, js_out_dir = pb [, proto_dir = .]]]                         #
+    #               => generate go/js/ts files from .proto files.                                        #
+    #       rf_ex2 clear|clean [, go_dir = pb [, js_dir = pb]]                                           #
+    #               => rm all .go, .js, .ts files from input directories                                 #
+    #====================================================================================================#
+    Task completed in 0m0.009s
+
+    $ run rf_ex2 gen
+    go_out_dir: pb, js_out_dir: pb, proto_dir: .
+    Task completed in 0m0.002s
+
+    $ run rf_ex2 gen gout jsout protodir
+    go_out_dir: gout, js_out_dir: jsout, proto_dir: protodir
+    Task completed in 0m0.002s
 ```
 
 ## Features

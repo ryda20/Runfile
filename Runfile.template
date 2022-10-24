@@ -10,7 +10,7 @@ for f in ${RF_DIR}/plugins/*_1; do
 	source ${f}
 done
 
-rf_example() {
+rf_ex1() {
 	rf_log_prefix="build"
 	rf_log_title "Example" "
 Description:
@@ -25,6 +25,42 @@ Params:
 Note:
 	Some note about this fn
 "
+}
+
+_rf_ex2_gen() {
+	go_out_dir=${1:-"pb"}
+	js_out_dir=${2:-"pb"}
+	proto_dir=${3:-"."}
+
+	echo "go_out_dir: ${go_out_dir}, js_out_dir: ${js_out_dir}, proto_dir: ${proto_dir}"
+}
+_rf_ex2_clean() {
+	go_dir=${1:-"pb"}
+	js_dir=${2:-"pb"}
+
+	echo "remove .go from: ${go_dir}"
+	echo "remove .js .ts from: ${js_dir}"
+}
+rf_ex2() {
+	local cmd=${1}; shift
+	local args=${@}
+	# rf_log "cmd: ${cmd}, args: ${args}"
+	case ${cmd} in
+	gen)
+		_rf_ex2_gen ${args}
+		;;
+	clear | clean)
+		_rf_ex2_clean ${args}
+		;;
+	*)
+		rf_log_title "available cmd(s)" "
+	rf_ex2 gen [, go_out_dir = pb [, js_out_dir = pb [, proto_dir = .]]]
+		=> generate go/js/ts files from .proto files.
+	rf_ex2 clear|clean [, go_dir = pb [, js_dir = pb]]
+		=> rm all .go, .js, .ts files from input directories
+		"
+		;;
+	esac
 }
 
 # rf_check_update will check if it available in new verion
