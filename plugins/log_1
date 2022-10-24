@@ -41,38 +41,31 @@ colors_index=0
 colors_index_pre=0
 random_color=${colors[$colors_index]}  # default color is black
 
-
 line_width=${RF_LINE_WIDTH:-100}
-
-
-##region EXPORT FN ==============================================================
 
 rf_log_prefix=""
 
 rf_log() {
-	# echo -e "# $@"
 	# some system dont show correctly color, so, i force to use
 	_log_prefix_init
-	if [ -z "${rf_log_prefix}" ]; then
-		echo -e "${random_color}# $@ ${NC}"
-	else
-		echo -e "${random_color}# ${rf_log_prefix} ${@} ${NC}"
-	fi
-	
+	str="${random_color}# "
+	if [ -n "${rf_log_prefix}" ]; then str="${str}${rf_log_prefix}"; fi
+	echo -e "${str}${@}${NC}"
 }
 
 rf_log_header() {
 	_random_color_gen
-	str="${@}"
-	len=${#str}
-	count=$(( line_width - len ))
-	# +1: for same len with log_title (we add more '#' - 1 char)
-	# -10: because we add more "#### $str ####" - 10 chars
-	# $1: len, $2: string, $3: prefix, $4: suffix
-	_repeat $(( count + 1 - 10 )) "=" "${random_color}#### ${str} ####" "#${NC}"
+	str="#### ${@} ####" # we add more text to prefix and suffix
+	len=$(( line_width - ${#str} + 1 )) # string len = ${#str}, +1: for same len with log_title ( we add more '#'(1 char) for each line )
+	# $1: len, $2: repeat_string, $3: prefix, $4: suffix
+	_repeat ${len} "=" "${random_color}${str}" "#${NC}"
 }
 
 rf_log_title() {
+	local title=${1:-""}
+	local content=${2:-""}
+	local format=${3:-"yes"}
+
 	_log_prefix_init
 	local padding=" "
 	local tab_len=${RF_TAG_WIDTH:-8}
@@ -80,10 +73,6 @@ rf_log_title() {
 	local line_2tab=$(( line_1tab - tab_len ))
 	local line_3tab=$(( line_2tab - tab_len ))
 	local line_4tab=$(( line_3tab - tab_len ))
-
-	local title=${1:-}
-	local content=${2:-}
-	local format=${3:-yes}
 
 	# print out - start - seperated line
 	rf_log_header "${title}"
@@ -98,7 +87,7 @@ rf_log_title() {
 	# 5. matching any   (except 1tab)  and padding 80 chars
 	#	actually 78 because we add more 2 char '# ',
 	#	all above not change because add more 2 chars does not effect to tab
-	# 6. matching any and append "#" at the  start and end
+	# 6. matching any and append "#" at the start and end
 	if [[ "${format}" == "yes" ]]; then
 		content=$(
 			sed -e :a \
@@ -120,28 +109,27 @@ rf_log_title() {
 	echo
 }
 
-##endregion =====================================================================
-
-##region INTERNAL FN ============================================================
 _log_prefix_init() {
-	if [ ! -z "${_log_prefix}" ] && [ ${_log_prefix::1} != "[" ]; then
+	if [ -n "${_log_prefix}" ] && [ ${_log_prefix::1} != "[" ]; then
 		_log_prefix="[${_log_prefix}]"
 	fi
 }
 
 # Repeat given char N times using shell function
+# echo options:
+# 	-e here enables the interpretation of backslash escapes
+# 	-n : this option is used to omit echoing trailing newline 
 _repeat() {
-	local start=1
 	local end=${1:-80}
 	local repeat_str="${2:-=}"
-	local range=$(seq $start $end)
 	local prefix="${3:-}"
 	local suffix="${4:-}"
+	# range start at 1
+	local range=$(seq 1 ${end})
+
 	# add prefix on start
 	echo -en "${prefix}"
-	# echo options:
-	# -e here enables the interpretation of backslash escapes
-	# -n : this option is used to omit echoing trailing newline 
+	#
 	for i in $range; do echo -n "${repeat_str}"; done
 	# add suffix on end
 	echo -e "${suffix}"
@@ -157,8 +145,3 @@ _random_color_gen() {
 	colors_index_pre=${colors_index}
 	random_color=${colors[$colors_index]}
 }
-
-
-
-##endregion =====================================================================
-# "$@"
