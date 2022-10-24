@@ -138,7 +138,7 @@ _fn_list_by() {
 _fn_list() {
 	local include_fn=${1:-""}
 	local exclude_fn=${2:-""}
-	local title=${3:-"all tasks"}
+	local title=${3:-"all fn(s)"}
 
 	# list functions, start first row with '# '
 	local fnList="# "
@@ -170,8 +170,8 @@ run <task> <args>
 "
 	rf_log_title "Usage" "${str}"
 	#
-	_fn_list "rf_" "" "build-in tasks"
-	_fn_list "" "_ rf_" "user tasks"
+	_fn_list "rf_" "" "runfile fn(s)"
+	_fn_list "" "_ rf_" "user fn(s)"
 }
 
 
@@ -185,7 +185,7 @@ __fn_list_check() {
 	# -> show user functions only
 	# -> hide functions start with _ and rf_
 	if [[ -z ${first_cmd} ]]; then
-		_fn_list "" "_ rf_" "user task"
+		_fn_list "" "_ rf_" "user fn(s)"
 		exit 0
 	fi
 
