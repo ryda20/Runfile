@@ -20,8 +20,6 @@ Open your directory and run `run-init` to add the default Runfile template to yo
 A Runfile will created and you just open it up, adding your tasks (bash script function).
 To see all your define tasks, just type `run` from terminal
 
-Default:
-
 ```sh
     $ run
     #### user fn(s) ####=================================================================================#
