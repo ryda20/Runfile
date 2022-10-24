@@ -1,0 +1,18 @@
+#!/bin/bash
+
+rf_ex1() {
+	rf_log_prefix="build"
+	rf_log_title "Example" "
+Description:
+	Description about build function run build arg1 arg2 arg3
+Params:
+	\$1: param 1 detail
+		2tab
+			3tab
+				4tab
+	\$2: param 2 detail
+	\$3: param 3 detail
+Note:
+	Some note about this fn
+"
+}

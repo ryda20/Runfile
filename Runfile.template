@@ -10,57 +10,40 @@ for f in ${RF_DIR}/plugins/*_1; do
 	source ${f}
 done
 
-rf_ex1() {
-	rf_log_prefix="build"
-	rf_log_title "Example" "
-Description:
-	Description about build function run build arg1 arg2 arg3
-Params:
-	\$1: param 1 detail
-		2tab
-			3tab
-				4tab
-	\$2: param 2 detail
-	\$3: param 3 detail
-Note:
-	Some note about this fn
-"
-}
+source ${RF_DIR}/rf_ex1_tmpl
+source ${RF_DIR}/rf_ex2_tmpl
 
-_rf_ex2_gen() {
-	go_out_dir=${1:-"pb"}
-	js_out_dir=${2:-"pb"}
-	proto_dir=${3:-"."}
-
-	echo "go_out_dir: ${go_out_dir}, js_out_dir: ${js_out_dir}, proto_dir: ${proto_dir}"
+# rf_copy_ex2 copy rf_ex2 to user Runfile
+# wip - not completed
+_rf_copy_ex2() {
+	if [[ "$(pwd)" == "${RF_DIR}" ]]; then
+		rf_log "do not copy tmpl fn to template Runfile"
+		exit 0
+	fi
+	cat ${RF_DIR}/rf_ex2_tmpl >> ./Runfile
 }
-_rf_ex2_clean() {
-	go_dir=${1:-"pb"}
-	js_dir=${2:-"pb"}
-
-	echo "remove .go from: ${go_dir}"
-	echo "remove .js .ts from: ${js_dir}"
-}
-rf_ex2() {
-	local cmd=${1}; shift
-	local args=${@}
-	# rf_log "cmd: ${cmd}, args: ${args}"
-	case ${cmd} in
-	gen)
-		_rf_ex2_gen ${args}
-		;;
-	clear | clean)
-		_rf_ex2_clean ${args}
-		;;
-	*)
-		rf_log_title "available cmd(s)" "
-	rf_ex2 gen [, go_out_dir = pb [, js_out_dir = pb [, proto_dir = .]]]
-		=> generate go/js/ts files from .proto files.
-	rf_ex2 clear|clean [, go_dir = pb [, js_dir = pb]]
-		=> rm all .go, .js, .ts files from input directories
-		"
-		;;
-	esac
+# rf_copy_ex1 copy rf_ex2 to user Runfile
+# wip - not completed
+_rf_copy_ex1() {
+	if [[ "$(pwd)" == "${RF_DIR}" ]]; then
+		rf_log "do not copy tmpl fn to template Runfile"
+		exit 0
+	fi
+	
+	copy=$(cat ${RF_DIR}/rf_ex1_tmpl | sed '/^#!.*$/d')
+	echo $copy
+	f="./Runfile"
+	# still error because in $copy have many special like (), {}, :,....
+	cp ${f} ${f}.tmp && \
+	sed -e "s|^##endregion USER.*$|\$\{copy\}\n&|" <${f}.tmp >${f} && \
+	rm -f ${f}.tmp
+	if [[ $? -eq 0 ]]; then
+		rf_log "sucessfully"
+	else
+		rf_log "not sucessfully"
+		cp ${f}.tmp ${f}
+		rm ${f}.tmp
+	fi
 }
 
 # rf_check_update will check if it available in new verion

@@ -1,0 +1,8 @@
+#!/bin/bash
+source ${RF_DIR:-~/.Runfile}/Runfile.template # MUST_START_OF_FILE
+##regison USER ===================================================
+
+
+
+##endregion USER =================================================
+__start_app ${@} # MUST_END_OF_FILE
