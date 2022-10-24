@@ -163,9 +163,6 @@ _fn_list() {
 
 
 help() {
-	# local str="sh -c \"\$(curl -fsSL https://gitlab.com/ryda20/runfile/-/raw/master/install.sh)\""
-	# rf_log_title "Installation" "${str}"
-
 	local str="
 $0 <task> <args>
 	or simple (by alias run=$0):
