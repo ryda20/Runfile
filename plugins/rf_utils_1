@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# rf_check_update will check if it available in new verion
+rf_check_update() {
+	rf_log_prefix="update"
+	rf_log "function is not implemented yet"
+}
+
+# _rf_update run update runfile
+rf_update() {
+	sh ${RF_DIR:-~/.Runfile}/install.sh update
+}
+
+# rf_copy_ex2 copy rf_ex2 to user Runfile
+# wip - not completed
+_rf_copy_ex2() {
+	if [[ "$(pwd)" == "${RF_DIR}" ]]; then
+		rf_log "do not copy tmpl fn to template Runfile"
+		exit 0
+	fi
+	
+	# cat plugins/rf_ex2_tmpl_1 >> ./Runfile
+}
+# rf_copy_ex1 copy rf_ex2 to user Runfile
+# wip - not completed
+_rf_copy_ex1() {
+	if [[ "$(pwd)" == "${RF_DIR}" ]]; then
+		rf_log "do not copy tmpl fn to template Runfile"
+		exit 0
+	fi
+	
+	copy=$(cat ${RF_DIR}/plugins/rf_ex1_tmpl_1 | sed '/^#!.*$/d')
+	echo $copy
+	f="./Runfile"
+	# still error because in $copy have many special like (), {}, :,....
+	cp ${f} ${f}.tmp && \
+	sed -e "s|^##endregion USER.*$|\$\{copy\}\n&|" <${f}.tmp >${f} && \
+	rm -f ${f}.tmp
+	if [[ $? -eq 0 ]]; then
+		rf_log "sucessfully"
+	else
+		rf_log "not sucessfully"
+		cp ${f}.tmp ${f}
+		rm ${f}.tmp
+	fi
+}
