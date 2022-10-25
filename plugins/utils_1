@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# rf_dir_recurse loop & print a folder recusively,
+# and will exit when return value != 0
+rf_dir_recurse() {
+	local dir=${1:-"."}
+	local fnFileCallback=${2:-}
+	local fnDirCallback=${3:-}
+    for f in "${dir}"/*;do
+        if [ -d "${f}" ] && [[ -n "${f}" ]]; then
+			if [[ -n ${fnDirCallback} ]]; then
+				# call the callback function and pass current directory path to it
+				fnDirCallback ${f}
+				if [[ $? != 0 ]]; then
+					exit $?
+				fi
+			fi
+			rf_dir_recurse "${f}"
+        elif [ -f "${f}" ] ; then
+			if [[ -n ${fnFileCallback} ]]; then
+				# call the callback function and pass current directory path to it
+				fnFileCallback ${f}
+				if [[ $? != 0 ]]; then
+					exit $?
+				fi
+			fi
+        fi
+    done
+}
