@@ -6,8 +6,7 @@ rf_dir_recurse() {
 	local dir=${1:-"."}
 	local fnFileCallback=${2:-}
 	local fnDirCallback=${3:-}
-
-    for f in "${dir}/*";do
+    for f in "${dir}"/*;do
         if [ -d "${f}" ] && [[ -n "${f}" ]]; then
 			if [[ -n ${fnDirCallback} ]]; then
 				# call the callback function and pass current directory path to it
