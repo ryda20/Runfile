@@ -84,7 +84,7 @@ _fn_list() {
 					fname=$(echo ${fname} | sed 's|alias_||' )
 				fi
 				# `%2d )` -> + 4 chars
-				rowX="${rowX}$( printf "%2d) %-${padding}s" ${idx} ${fname} )"
+				rowX="${rowX}$( printf "%2d) %-${padding}s" $(( idx + 1 )) ${fname} )"
 			else
 				# still keep space for "x) " - 4 spaces for formating correctly
 				rowX="${rowX}$( printf "    %-${padding}s" "" )"
