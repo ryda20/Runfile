@@ -149,14 +149,14 @@ __fn_list_check() {
 	# " abc " -> valid, but
 	# " ab " -> not valid
 	if [[ " ${__fn_list} " == *" alias_${cmd} "* ]]; then
-		echo "command \`${cmd}\` is alias"
+		# echo "command \`${cmd}\` is alias"
 		# call alias
 		alias_${cmd} ${args}
 	elif [[ " ${__fn_list} " != *" ${cmd} "* ]]; then
 		echo "command \`${cmd}\` is not valid"
 		exit 1
 	else
-		echo "valid command: ${cmd} ${args}"
+		# echo "valid command: ${cmd} ${args}"
 		${cmd} ${args}
 	fi
 }

@@ -34,3 +34,42 @@ alias_gwu() {
 #
 ## go mod
 #
+alias_gmd() {
+	echo "run: go mod download ${@}"
+	go mod download "$@"
+}
+
+alias_gme() {
+	echo "run: go mod edit ${@}"
+	go mod edit "$@"
+}
+
+alias_gmg() {
+	echo "run: go mod graph ${@}"
+	go mod graph "$@"
+}
+
+alias_gmi() {
+	echo "run: go mod init ${@}"
+	go mod init "$@"
+}
+
+alias_gmt() {
+	echo "run: go mod tidy ${@}"
+	go mod tidy "$@"
+}
+
+alias_gmv() {
+	echo "run: go mod vendor ${@}"
+	go mod vendor "$@"
+}
+
+alias_gmvr() {
+	echo "run: go mod verify ${@}"
+	go mod verify "$@"
+}
+
+alias_gmw() {
+	echo "run: go mod why ${@}"
+	go mod why "$@"
+}
