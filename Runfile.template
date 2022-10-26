@@ -1,76 +1,13 @@
 #!/bin/bash
 RF_DIR=${RF_DIR:-~/.Runfile} # get RF_DIR from ENV or using default value
-
-COLUMN_WIDTH=${RF_COLUMN_WIDTH:-30}
-COLUMN_NUMBER=${RF_COLUMN_NUMB:-3}
-TIMEFORMAT="Task completed in %3lR"
-
+source ${RF_DIR}/vars
 
 # only include file end with _1 (enable), _0 (disable)
 for f in ${RF_DIR}/plugins/*_1; do
+	# echo "loading: $f"
 	source ${f}
 done
 
-
-# _fn_format format functions in column mode
-_fn_format() {
-	local fname=${1:-}
-	local idx=${2:-1} # idx is a number of functions for easy view, and use to detect to add new line
-	local end_of_array=${3:-""}
-	local alias=${4:-""}
-
-	local columnNumber=${COLUMN_NUMBER}
-	local columnWidth=${COLUMN_WIDTH}
-
-	if [[ "${alias}" == "alias" ]]; then
-		# increase number column if fname is a alias
-		# descrease column width
-		# remove alias_ prefix, too
-		columnNumber=$(( 7 ))
-		columnWidth=$(( COLUMN_WIDTH / 3 ))
-		fname=$( echo ${fname} | sed 's/^alias_//' )
-	fi
-	local mod=$(( idx % columnNumber ))
-	local newline=""
-
-	if [[ ${mod} -eq 0 ]] && [[ ${idx} -gt 0 ]]; then
-		# mod == 0 -> end of row. we add '#' char at the end of current row and at the start of new row
-		newline="#\n# "
-	fi
-
-	local paddingWidth=${columnWidth}
-	if [[ ${mod} -eq 0 ]]; then
-		paddingWidth=$(( columnWidth - 3 )) # -3 because we added 3 chars on newline
-	fi
-
-	idx=$(( idx + 1 )) # +1 because idx, we want to start at 1 (array start at 0)
-	# 
-	# checking the last items in which column index. For what? to calculate the paddingWidth
-	# We can calculate with modulo: mod = last_idx % colNumb
-	# So, the last item will be in column number `mod`. Ex:
-	# mod = 0 -> last item in 	last column 		-> padding  = COLUMN_WIDTH 
-	# 		1 -> 				first column 		-> 			= COLUMN_WIDTH + COLUMN_WIDTH * (COLUMN_NUMBER - mod)
-	#		2 ->				second column 		-> 			= COLUMN_WIDTH + COLUMN_WIDTH * (COLUMN_NUMBER - mod)
-	#		3 ->				third column 		-> 			= _same_above_
-	# ......
-	if [[ "${end_of_array}" == "end_of_array" ]]; then
-		mod=$(( idx % columnNumber )) # calculate mod again to find the last item in which column number
-		if [[ ${mod} != 0 ]]; then
-			# + 3 because: we was added 3 chars at newline (#\n# )
-			# + first COLUMN_WIDTH: padding for current column number
-			# + COLUMN_WIDTH * padding_column_number: padding for all empty columns after current column
-			# + padding_column_number: number of columns need to padding
-			padding_column_number=$(( columnNumber - mod ))
-			paddingWidth=$(( 3 + columnWidth + columnWidth * padding_column_number + padding_column_number ))
-		fi
-		str=$(printf "%2d) %-${paddingWidth}s#" ${idx} ${fname})
-	else
-		str=$(printf "%2d) %-${paddingWidth}s" ${idx} ${fname})
-	fi
-	
-	str="${newline}${str}"
-	echo "${str}"
-}
 
 # _fn_list_by return a string "func1 func2 func3 ...." with condition input
 _fn_list_by() {
@@ -127,25 +64,43 @@ _fn_list() {
 	local title=${3:-"all fn(s)"}
 	local alias=${4:-""}
 
-	# list functions, start first row with '# '
-	local fnList="# "
-	#
+	# list functions formated by printf
+	local fnList=""
 	local str=$(_fn_list_by "${include_fn}" "${exclude_fn}")
 	local arr=(${str}) # convert string "x y z" to array
-	local arr_len="${#arr[@]}"
+	local arr_len=${#arr[@]}
 	local idx=0
-	#
-	for f in ${arr[@]}; do
-		if [[ ${idx} == $(( arr_len - 1)) ]]; then
-			str=$(_fn_format ${f} ${idx} "end_of_array" "${alias}")
-		else
-			str=$(_fn_format ${f} ${idx} "" "${alias}")
-		fi
-		idx=$(( idx + 1 ))
-		fnList="${fnList}${str}"
+	local columns=${COLUMN_NUMBER}
+	if [[ ${alias} == "alias" ]]; then columns=6; fi
+	rowLen=0
+	local padding=$(( LINE_LEN / columns - 4 )) # -4 because we added 4 char `%2d) ` and we don't want to increse line len more
+	for (( i=0; i < arr_len; i+=columns)); do
+		local rowX="# " # `# ` 	-> + 2 chars
+		for (( j=0; j < columns; j++ )); do
+			idx=$(( i + j ))
+			if (( ${idx} < ${arr_len} )); then
+				fname=${arr[idx]}
+				if [[ ${alias} == "alias" ]]; then
+					fname=$(echo ${fname} | sed 's|alias_||' )
+				fi
+				# `%2d )` -> + 4 chars
+				rowX="${rowX}$( printf "%2d) %-${padding}s" ${idx} ${fname} )"
+			else
+				# still keep space for "x) " - 4 spaces for formating correctly
+				rowX="${rowX}$( printf "    %-${padding}s" "" )"
+			fi
+		done
+		rowX="$rowX#\n" # `\n`	-> + 2 chars
+		# set row len to send to rf_log_xxx
+		# - 4 because we add 4 chars and we want to keep LINE_LEN
+		# and set only one time because rows len is equal
+		# and must to subtract because some of chars does not display, so, the display will not true (\n)
+		if (( rowLen == 0 )); then rowLen=$(( ${#rowX} - 4 )); fi
+		fnList="${fnList}${rowX}"
 	done
-	
-	rf_log_title "${title}" "${fnList}" "no_format"
+	fnList="${fnList%'\n'}" # remove 2 chars at end of string out '\n', or using: ${out%??}
+	# echo "rowlen: $rowLen, padding: $padding,"
+	rf_log_title "${title}" "${fnList}" "no" ${rowLen}
 }
 
 

@@ -21,6 +21,7 @@ update_process() {
 }
 
 local_process() {
+	rm -rf ~/.Runfile
 	mkdir -p ~/.Runfile
 	cp -rf * ~/.Runfile/
 }

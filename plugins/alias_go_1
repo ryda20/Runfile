@@ -31,19 +31,6 @@ alias_gwu() {
 	go work use ${@}
 }
 
-alias_gww() {
-	echo "run go work work"
-}
-
-alias_gwn() {
-	echo "run go work work"
-}
-
-alias_gwm() {
-	echo "run go work work"
-}
-
-
 #
 ## go mod
 #

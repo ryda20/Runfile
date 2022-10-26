@@ -41,27 +41,22 @@ colors_index=0
 colors_index_pre=0
 random_color=${colors[$colors_index]}  # default color is black
 
-# i want dynamic base on content of user input
-line_width=${RF_LINE_WIDTH:-100}
-
 rf_log_prefix=""
 
 rf_log() {
 	# some system dont show correctly color, so, i force to use
 	_log_prefix_init
-	str="${random_color}# "
+	str="${random_color}#"
 	if [ -n "${rf_log_prefix}" ]; then str="${str}${rf_log_prefix}"; fi
 	echo -e "${str}${@}${NC}"
 }
 
 rf_log_header() {
 	local str=${1:-""}
-	local line_width=${2:-${line_width}}
-	# echo "line_width: ${line_width}"
-
+	local linelen=${2:-$LINE_LEN}
 	_random_color_gen
 	str="#### ${str} ####" # we add more text to prefix and suffix
-	len=$(( line_width - ${#str} + 1 )) # string len = ${#str}, +1: for same len with log_title ( we add more '#'(1 char) for each line )
+	len=$(( linelen - ${#str} + 1 )) # +1 because we add more # at the end of header
 	# $1: len, $2: repeat_string, $3: prefix, $4: suffix
 	_repeat ${len} "=" "${random_color}${str}" "#${NC}"
 }
@@ -70,18 +65,18 @@ rf_log_title() {
 	local title=${1:-}
 	local content=${2:-""}
 	local format=${3:-"yes"}
-	local line_width=${4:-${line_width}}
+	local linelen=${4:-$LINE_LEN}
 
 	local padding=" "
 	local tab_len=${RF_TAG_WIDTH:-8}
-	local line_1tab=$(( line_width - tab_len ))
+	local line_1tab=$(( linelen - tab_len ))
 	local line_2tab=$(( line_1tab - tab_len ))
 	local line_3tab=$(( line_2tab - tab_len ))
 	local line_4tab=$(( line_3tab - tab_len ))
 
 	_log_prefix_init
 	# print out - start - seperated line
-	rf_log_header "${title}" ${line_width}
+	rf_log_header "${title}" ${linelen}
 	
 	# print out contents
 	# Support to 4 tabs space for now
@@ -94,7 +89,7 @@ rf_log_title() {
 	#	actually 78 because we add more 2 char '# ',
 	#	all above not change because add more 2 chars does not effect to tab
 	# 6. matching any and append "#" at the start and end
-	if [[ "${format}" == "yes" ]] || [[ "${format}" == "" ]]; then
+	if [[ "${format}" == "yes" ]]; then
 		content=$(
 			sed -e :a \
 				-e 's/\n//g' \
@@ -103,14 +98,14 @@ rf_log_title() {
 				-e "/^\t\{4\}/! s/^\t\{3\}.\{1,${line_3tab}\}$/&${padding}/;ta" \
 				-e "/^\t\{3\}/! s/^\t\{2\}.\{1,${line_2tab}\}$/&${padding}/;ta" \
 				-e "/^\t\{2\}/! s/^\t.\{1,${line_1tab}\}$/&${padding}/;ta" \
-				-e "/^\t\{1\}/! s/^.\{1,$(( line_width - 2 ))\}$/&${padding}/;ta" \
+				-e "/^\t\{1\}/! s/^.\{1,$(( linelen - 2 ))\}$/&${padding}/;ta" \
 				-e "s/^.*$/# &#/g" <<< "${content}"
 		)
 	fi
 	echo -e "${random_color}${content}${NC}"
 
 	# print out - end - seperated line
-	_repeat ${line_width} "=" "${random_color}#" "#${NC}"
+	_repeat ${linelen} "=" "${random_color}#" "#${NC}"
 	# make new empty line
 	echo
 }
