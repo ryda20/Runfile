@@ -5,6 +5,7 @@ COLUMN_WIDTH=${RF_COLUMN_WIDTH:-30}
 COLUMN_NUMBER=${RF_COLUMN_NUMB:-3}
 TIMEFORMAT="Task completed in %3lR"
 
+
 # only include file end with _1 (enable), _0 (disable)
 for f in ${RF_DIR}/plugins/*_1; do
 	source ${f}
@@ -16,8 +17,20 @@ _fn_format() {
 	local fname=${1:-}
 	local idx=${2:-1} # idx is a number of functions for easy view, and use to detect to add new line
 	local end_of_array=${3:-""}
-	#
-	local mod=$(( idx % COLUMN_NUMBER ))
+	local alias=${4:-""}
+
+	local columnNumber=${COLUMN_NUMBER}
+	local columnWidth=${COLUMN_WIDTH}
+
+	if [[ "${alias}" == "alias" ]]; then
+		# increase number column if fname is a alias
+		# descrease column width
+		# remove alias_ prefix, too
+		columnNumber=$(( 7 ))
+		columnWidth=$(( COLUMN_WIDTH / 3 ))
+		fname=$( echo ${fname} | sed 's/^alias_//' )
+	fi
+	local mod=$(( idx % columnNumber ))
 	local newline=""
 
 	if [[ ${mod} -eq 0 ]] && [[ ${idx} -gt 0 ]]; then
@@ -25,9 +38,9 @@ _fn_format() {
 		newline="#\n# "
 	fi
 
-	local paddingWidth=${COLUMN_WIDTH}
+	local paddingWidth=${columnWidth}
 	if [[ ${mod} -eq 0 ]]; then
-		paddingWidth=$((COLUMN_WIDTH - 3)) # -3 because we added 3 chars on newline
+		paddingWidth=$(( columnWidth - 3 )) # -3 because we added 3 chars on newline
 	fi
 
 	idx=$(( idx + 1 )) # +1 because idx, we want to start at 1 (array start at 0)
@@ -41,14 +54,14 @@ _fn_format() {
 	#		3 ->				third column 		-> 			= _same_above_
 	# ......
 	if [[ "${end_of_array}" == "end_of_array" ]]; then
-		mod=$(( idx % COLUMN_NUMBER )) # calculate mod again to find the last item in which column number
+		mod=$(( idx % columnNumber )) # calculate mod again to find the last item in which column number
 		if [[ ${mod} != 0 ]]; then
 			# + 3 because: we was added 3 chars at newline (#\n# )
 			# + first COLUMN_WIDTH: padding for current column number
 			# + COLUMN_WIDTH * padding_column_number: padding for all empty columns after current column
 			# + padding_column_number: number of columns need to padding
-			padding_column_number=$(( COLUMN_NUMBER - mod ))
-			paddingWidth=$(( 3 + COLUMN_WIDTH + COLUMN_WIDTH * padding_column_number + padding_column_number ))
+			padding_column_number=$(( columnNumber - mod ))
+			paddingWidth=$(( 3 + columnWidth + columnWidth * padding_column_number + padding_column_number ))
 		fi
 		str=$(printf "%2d) %-${paddingWidth}s#" ${idx} ${fname})
 	else
@@ -112,6 +125,7 @@ _fn_list() {
 	local include_fn=${1:-""}
 	local exclude_fn=${2:-""}
 	local title=${3:-"all fn(s)"}
+	local alias=${4:-""}
 
 	# list functions, start first row with '# '
 	local fnList="# "
@@ -123,14 +137,14 @@ _fn_list() {
 	#
 	for f in ${arr[@]}; do
 		if [[ ${idx} == $(( arr_len - 1)) ]]; then
-			str=$(_fn_format ${f} ${idx} "end_of_array")
+			str=$(_fn_format ${f} ${idx} "end_of_array" "${alias}")
 		else
-			str=$(_fn_format ${f} ${idx} "")
+			str=$(_fn_format ${f} ${idx} "" "${alias}")
 		fi
 		idx=$(( idx + 1 ))
 		fnList="${fnList}${str}"
 	done
-	#
+	
 	rf_log_title "${title}" "${fnList}" "no_format"
 }
 
@@ -144,7 +158,8 @@ run <task> <args>
 	rf_log_title "Usage" "${str}"
 	#
 	_fn_list "rf_" "" "runfile fn(s)"
-	_fn_list "" "_ rf_" "user fn(s)"
+	_fn_list "alias_" "" "alias fn(s)" "alias"
+	_fn_list "" "_ rf_ alias_" "user fn(s)"
 }
 
 
@@ -152,36 +167,46 @@ run <task> <args>
 # dont change this function name to ensure the app works after you update.
 # if you want to change, make sure change in Runfile (time __fn_list_check), too
 __fn_list_check() {
-	first_cmd=${1}
+	local cmd=${1}; shift
+	local args=$@
 
-	# if no input: ${#first_cmd} -eq 0. Nothing to check 
+	# if no input: ${#cmd} -eq 0. Nothing to check 
 	# -> show user functions only
 	# -> hide functions start with _ and rf_
-	if [[ -z ${first_cmd} ]]; then
-		_fn_list "" "_ rf_" "user fn(s)"
+	if [[ -z "${cmd}" ]]; then
+		_fn_list "alias_" "" "alias fn(s)" "alias"
+		_fn_list "" "_ rf_ alias_" "user fn(s)"
 		exit 0
 	fi
 
 	# return user functions and build-in function, exclude internal function (start with _)
 	local __fn_list=$(_fn_list_by "" "_")
-	# check ${first_cmd} to see if it available in fn_list
+
+	# check for alias first, if not have, check for normally function
+	# check ${cmd} to see if it available in fn_list
 	# note: we add space before and after __fn_list and first_cmd to make sure we are compairing full word
 	# because we will go wrong if:
 	# ex: __fn_list = "abc edf ght dgr"
-	# Case : first_cmd = ab or df or gr,... -> command will valid (because we use * in comparation)
+	# Case : cmd = ab or df or gr,... -> command will valid (because we use * in comparation)
 	# Fix:
 	# __fn_list = " abc edf ght dgr "
-	# first_cmd = " search " =>
+	# cmd = " search " =>
 	# " abc " -> valid, but
 	# " ab " -> not valid
-	if [[ " ${__fn_list} " != *" ${first_cmd} "* ]]; then
-		echo "command \`${@}\` is not valid"
-		exit 0
+	if [[ " ${__fn_list} " == *" alias_${cmd} "* ]]; then
+		echo "command \`${cmd}\` is alias"
+		# call alias
+		alias_${cmd} ${args}
+	elif [[ " ${__fn_list} " != *" ${cmd} "* ]]; then
+		echo "command \`${cmd}\` is not valid"
+		exit 1
+	else
+		echo "valid command: ${cmd} ${args}"
+		${cmd} ${args}
 	fi
-
-	#echo "command \`${@}\` is valid, so, call the command"
-	${@}
 }
+
+
 
 # __start_app must to call this function at the end of user Runfile
 __start_app() {

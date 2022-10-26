@@ -1,0 +1,49 @@
+#/bin/bash
+
+#
+## go work
+#
+
+# alias gwe for go work edit
+alias_gwe() {
+	echo "run: go work edit $@"
+	go work edit $@
+}
+# alias gwi for go work init
+alias_gwi() {
+	echo "run: go work init $@"
+	go work init $@
+}
+
+# alias gws for go work sync
+alias_gws(){
+	echo "run: go work sync $@"
+	go work sync $@
+}
+
+# alias gwu for go work use
+alias_gwu() {
+	echo "run: go work use ${@}"
+	# translate to: go work use
+	# alias_cmd=go
+	# alias_args=work use
+	# args=${@}
+	go work use ${@}
+}
+
+alias_gww() {
+	echo "run go work work"
+}
+
+alias_gwn() {
+	echo "run go work work"
+}
+
+alias_gwm() {
+	echo "run go work work"
+}
+
+
+#
+## go mod
+#
