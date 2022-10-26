@@ -41,6 +41,7 @@ colors_index=0
 colors_index_pre=0
 random_color=${colors[$colors_index]}  # default color is black
 
+# i want dynamic base on content of user input
 line_width=${RF_LINE_WIDTH:-100}
 
 rf_log_prefix=""
@@ -54,19 +55,23 @@ rf_log() {
 }
 
 rf_log_header() {
+	local str=${1:-""}
+	local line_width=${2:-${line_width}}
+	# echo "line_width: ${line_width}"
+
 	_random_color_gen
-	str="#### ${@} ####" # we add more text to prefix and suffix
+	str="#### ${str} ####" # we add more text to prefix and suffix
 	len=$(( line_width - ${#str} + 1 )) # string len = ${#str}, +1: for same len with log_title ( we add more '#'(1 char) for each line )
 	# $1: len, $2: repeat_string, $3: prefix, $4: suffix
 	_repeat ${len} "=" "${random_color}${str}" "#${NC}"
 }
 
 rf_log_title() {
-	local title=${1:-""}
+	local title=${1:-}
 	local content=${2:-""}
 	local format=${3:-"yes"}
+	local line_width=${4:-${line_width}}
 
-	_log_prefix_init
 	local padding=" "
 	local tab_len=${RF_TAG_WIDTH:-8}
 	local line_1tab=$(( line_width - tab_len ))
@@ -74,8 +79,9 @@ rf_log_title() {
 	local line_3tab=$(( line_2tab - tab_len ))
 	local line_4tab=$(( line_3tab - tab_len ))
 
+	_log_prefix_init
 	# print out - start - seperated line
-	rf_log_header "${title}"
+	rf_log_header "${title}" ${line_width}
 	
 	# print out contents
 	# Support to 4 tabs space for now
@@ -88,7 +94,7 @@ rf_log_title() {
 	#	actually 78 because we add more 2 char '# ',
 	#	all above not change because add more 2 chars does not effect to tab
 	# 6. matching any and append "#" at the start and end
-	if [[ "${format}" == "yes" ]]; then
+	if [[ "${format}" == "yes" ]] || [[ "${format}" == "" ]]; then
 		content=$(
 			sed -e :a \
 				-e 's/\n//g' \
@@ -145,3 +151,6 @@ _random_color_gen() {
 	colors_index_pre=${colors_index}
 	random_color=${colors[$colors_index]}
 }
+
+# starting
+# "$@"
