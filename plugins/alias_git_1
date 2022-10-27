@@ -39,13 +39,13 @@ alias_gitcheckout() {
 	git checkout "$@"
 }
 
-#alias_gitpush: git push origin HEAD
+#alias_gitpush: push origin HEAD
 alias_gitpush() {
 	echo "git push origin HEAD $@"
 	git push origin HEAD "$@"
 }
 
-#alias_gitpull: git pull origin HEAD
+#alias_gitpull: pull origin HEAD
 alias_gitpull() {
 	echo "git pull origin HEAD $@"
 	git pull origin HEAD "$@"
