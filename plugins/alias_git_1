@@ -9,7 +9,7 @@
 #
 ## git
 #
-git=$(which git)
+
 
 #alias_gits: git status
 alias_gits() {
@@ -27,9 +27,9 @@ alias_gitc() {
 }
 #alias_gitcommit: git commit -m
 alias_gitcommit() {
-	echo "$git add --all && $git commit -m \"$@\""
-	$git add --all
-	$git commit -m "$@"
+	echo "git add --all && git commit -m \"$@\""
+	git add --all
+	git commit -m "\"$@\""
 }
 
 #alias_gitcheckout: git checkout
