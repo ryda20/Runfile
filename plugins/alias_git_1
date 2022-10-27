@@ -27,9 +27,10 @@ alias_gitc() {
 }
 #alias_gitcommit: git commit -m
 alias_gitcommit() {
-	echo "git add --all && git commit -m \"$@\""
+	local message=${1:-""}
+	echo "git add --all && git commit -m ${message}"
 	git add --all
-	git commit -m "${1}"
+	git commit -m "${message}"
 }
 
 #alias_gitcheckout: git checkout
