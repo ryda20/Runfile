@@ -9,6 +9,58 @@
 #
 ## git
 #
+git=$(which git)
+
+#alias_gits: git status
+alias_gits() {
+	echo "git status"
+	git status
+}
+#alias_gitstatus: git status
+alias_gitstatus() {
+	alias_gits
+}
+
+#alias_gitc: git commit -m
+alias_gitc() {
+	alias_gitcommit "$@"
+}
+#alias_gitcommit: git commit -m
+alias_gitcommit() {
+	echo "$git add --all && $git commit -m \"$@\""
+	$git add --all
+	$git commit -m "$@"
+}
+
+#alias_gitcheckout: git checkout
+alias_gitcheckout() {
+	echo "git checkout $@"
+	git checkout "$@"
+}
+
+#alias_gitpush: git push origin HEAD
+alias_gitpush() {
+	echo "git push origin HEAD $@"
+	git push origin HEAD "$@"
+}
+
+#alias_gitpull: git pull origin HEAD
+alias_gitpull() {
+	echo "git pull origin HEAD $@"
+	git pull origin HEAD "$@"
+}
+
+#alias_gitlog: git log
+alias_gitlog() {
+	git log
+}
+#alias_gitlogf: git log --pretty
+alias_gitlogf() {
+	git log --pretty=format:"%C(magenta)%h%Creset -%C(red)%d%Creset %s %C(dim green)(%cr) [%an]" --abbrev-commit -30 $@
+}
+
+
+
 
 #alias_gitr: git remote -v
 alias_gitr() {
@@ -18,21 +70,6 @@ alias_gitr() {
 #alias_gitd: git diff
 alias_gitd() {
 	git diff $@
-}
-
-#alias_gits: git status
-alias_gits() {
-	git status
-}
-
-#alias_gitco: git checkout
-alias_gitco() { 
-	git checkout $@
-}
-
-#alias_gitcob: git checkout -b
-alias_gitcob() {
-	git checkout -b $@
 }
 
 #alias_gitdel: git branch -D
@@ -45,15 +82,6 @@ alias_gitbr() {
 	git branch --format='%(HEAD) %(color:yellow)%(refname:short)%(color:reset) - %(contents:subject) %(color:green)(%(committerdate:relative)) [%(authorname)]' --sort=-committerdate $@
 }
 
-#alias_gitsave: git commit -m
-alias_gitsave() {
-	git add -A && git commit -m $@
-}
-#alias_gitcm: git commit -m
-alias_gitcm() {
-	alias_gitsave $@
-}
-
 #alias_gitundo: git reset HEAD~1
 alias_gitundo() {
 	git reset HEAD~1 --mixed $@
@@ -62,23 +90,4 @@ alias_gitundo() {
 #alias_gitres: git reset --hard
 alias_gitres() {
 	git reset --hard $@
-}
-
-#alias_gitdone: git push origin
-alias_gitdone() {
-	git push origin HEAD $@
-}
-#alias_gitp: git push
-alias_gitp() {
-	alias_gitdone $@
-}
-
-
-#alias_gitlg: git log
-alias_gitlg() {
-	git log
-}
-#alias_gitlgf: git log --pretty
-alias_gitlgf() {
-	git log --pretty=format:"%C(magenta)%h%Creset -%C(red)%d%Creset %s %C(dim green)(%cr) [%an]" --abbrev-commit -30 $@
 }
