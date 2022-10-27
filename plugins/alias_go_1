@@ -92,7 +92,7 @@ alias_gomw() {
 }
 
 # run go, then select available keyworks
-go() {
+rf_go_test() {
 	local cmd=${1}; shift
 	local args=${@}
 	# echo "cmd: ${cmd}, args: ${agrc}"

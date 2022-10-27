@@ -105,7 +105,7 @@ _fn_list() {
 
 	# list functions formated by printf
 	local rowLen=0
-	local rowX=""
+	local rowX=0
 	local fnList=""
 	local str=$(_fn_list_by "${include_fn}" "${exclude_fn}")
 	local arr=(${str}) # convert string "x y z" to array
