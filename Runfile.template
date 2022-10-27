@@ -158,19 +158,21 @@ _fn_list() {
 help() {
 	local str="
 run <fn_name> <args>
-run help alias
-	=> to show alias fn list only
+run help alias <prefix>
+	=> to show alias fn list only,
+	=> prefix: run help alias go -> only show alias start with goxxxx
 run help rf
 	=> to show internal rf fn only
 "
 	local cmd=${1}
+	local alias_filter=${2}
+
 	if [[ "${cmd}" == "alias" ]]; then
 		# show alias
-		_fn_list "alias_" "" "alias fn(s)" "alias"
+		_fn_list "alias_${alias_filter}" "" "alias fn(s)" "alias"
 		exit 0
 	fi
 	if [[ "${cmd}" == "rf" ]]; then
-		# show alias
 		_fn_list "rf_" "" "rf fn(s)"
 		exit 0
 	fi

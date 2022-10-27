@@ -1,0 +1,84 @@
+#/bin/bash
+
+#
+## Note: the format of function description as below:
+# fn_name: description
+# and must unique
+
+
+#
+## git
+#
+
+#alias_gitr: git remote -v
+alias_gitr() {
+	git remote -v $@
+}
+
+#alias_gitd: git diff
+alias_gitd() {
+	git diff $@
+}
+
+#alias_gits: git status
+alias_gits() {
+	git status
+}
+
+#alias_gitco: git checkout
+alias_gitco() { 
+	git checkout $@
+}
+
+#alias_gitcob: git checkout -b
+alias_gitcob() {
+	git checkout -b $@
+}
+
+#alias_gitdel: git branch -D
+alias_gitdel() {
+	git branch -D $@  
+} 
+
+#alias_gitbr: git branch --format
+alias_gitbr() {
+	git branch --format='%(HEAD) %(color:yellow)%(refname:short)%(color:reset) - %(contents:subject) %(color:green)(%(committerdate:relative)) [%(authorname)]' --sort=-committerdate $@
+}
+
+#alias_gitsave: git commit -m
+alias_gitsave() {
+	git add -A && git commit -m $@
+}
+#alias_gitcm: git commit -m
+alias_gitcm() {
+	alias_gitsave $@
+}
+
+#alias_gitundo: git reset HEAD~1
+alias_gitundo() {
+	git reset HEAD~1 --mixed $@
+}
+
+#alias_gitres: git reset --hard
+alias_gitres() {
+	git reset --hard $@
+}
+
+#alias_gitdone: git push origin
+alias_gitdone() {
+	git push origin HEAD $@
+}
+#alias_gitp: git push
+alias_gitp() {
+	alias_gitdone $@
+}
+
+
+#alias_gitlg: git log
+alias_gitlg() {
+	git log
+}
+#alias_gitlgf: git log --pretty
+alias_gitlgf() {
+	git log --pretty=format:"%C(magenta)%h%Creset -%C(red)%d%Creset %s %C(dim green)(%cr) [%an]" --abbrev-commit -30 $@
+}

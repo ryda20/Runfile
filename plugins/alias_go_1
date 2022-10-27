@@ -32,10 +32,6 @@ alias_gows(){
 #alias_gowu: go work use
 alias_gowu() {
 	echo "run: go work use ${@}"
-	# translate to: go work use
-	# alias_cmd=go
-	# alias_args=work use
-	# args=${@}
 	go work use ${@}
 }
 
@@ -79,8 +75,8 @@ alias_gomv() {
 	go mod vendor "$@"
 }
 
-#alias_gomvy: go mod verify
-alias_gomvy() {
+#alias_gomr: go mod verify
+alias_gomr() {
 	echo "run: go mod verify ${@}"
 	go mod verify "$@"
 }
