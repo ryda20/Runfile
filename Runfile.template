@@ -57,6 +57,45 @@ _fn_list_by() {
 	echo "${str}"
 }
 
+_fn_row_format() {
+	local arr=${1}
+	local alias=${2:-""}
+	local arr_len=${#arr[@]}
+	local idx=0
+	local columns=${COLUMN_NUMBER}
+	local description=""
+	local rowX=""
+	local padding=$(( LINE_LEN / columns - 4 )) # -4 because we added 4 char `%2d) ` and we don't want to increse line len more
+	for (( i=0; i < arr_len; i+=columns)); do
+		rowX="# " # `# ` 	-> + 2 chars
+		for (( j=0; j < columns; j++ )); do
+			idx=$(( i + j ))
+			if (( idx < arr_len )); then
+				fname=${arr[idx]}
+				if [[ ${alias} == "alias" ]]; then
+					# get descriptition.  how?
+					# find a alias file in plugins dir and echo it path to cat out content,
+					# then send to sed and find the matching, remove the matching part,
+					# then print out (by -n and p) the description
+					description=$(cat $(find ${RF_DIR}/plugins -type f -name 'alias_*_1'  -exec echo {} \;) | sed -n "s|^#${fname}: ||p")
+					if [[ -n ${description} ]]; then
+						fname="$(echo ${fname} | sed 's|alias_||' ) (${description})"
+					else
+						fname="$(echo ${fname} | sed 's|alias_||' )"
+					fi
+					description=""
+				fi
+				# `%2d )` -> + 4 chars
+				rowX="${rowX}$( printf "%2d) %-${padding}s" $(( idx + 1 )) "${fname}" )"
+			else
+				# still keep space for "x) " - 4 spaces for formating correctly
+				rowX="${rowX}$( printf "    %-${padding}s" "" )"
+			fi
+		done
+		rowX="$rowX#\n" # `\n`	-> + 2 chars
+	done
+	echo "$rowX"
+}
 # _fn_list show list of available functions
 _fn_list() {
 	local include_fn=${1:-""}
@@ -65,14 +104,16 @@ _fn_list() {
 	local alias=${4:-""}
 
 	# list functions formated by printf
+	local rowLen=0
+	local rowX=""
 	local fnList=""
 	local str=$(_fn_list_by "${include_fn}" "${exclude_fn}")
 	local arr=(${str}) # convert string "x y z" to array
 	local arr_len=${#arr[@]}
 	local idx=0
 	local columns=${COLUMN_NUMBER}
-	if [[ ${alias} == "alias" ]]; then columns=6; fi
-	rowLen=0
+	local description=""
+	# if [[ ${alias} == "alias" ]]; then columns=6; fi
 	local padding=$(( LINE_LEN / columns - 4 )) # -4 because we added 4 char `%2d) ` and we don't want to increse line len more
 	for (( i=0; i < arr_len; i+=columns)); do
 		local rowX="# " # `# ` 	-> + 2 chars
@@ -81,10 +122,20 @@ _fn_list() {
 			if (( ${idx} < ${arr_len} )); then
 				fname=${arr[idx]}
 				if [[ ${alias} == "alias" ]]; then
-					fname=$(echo ${fname} | sed 's|alias_||' )
+					# get descriptition.  how?
+					# find a alias file in plugins dir and echo it path to cat out content,
+					# then send to sed and find the matching, remove the matching part,
+					# then print out (by -n and p) the description
+					description=$(cat $(find ${RF_DIR}/plugins -type f -name 'alias_*_1'  -exec echo {} \;) | sed -n "s|^#${fname}: ||p")
+					if [[ -n ${description} ]]; then
+						fname="$(echo ${fname} | sed 's|alias_||' ) (${description})"
+					else
+						fname="$(echo ${fname} | sed 's|alias_||' )"
+					fi
+					description=""
 				fi
 				# `%2d )` -> + 4 chars
-				rowX="${rowX}$( printf "%2d) %-${padding}s" $(( idx + 1 )) ${fname} )"
+				rowX="${rowX}$( printf "%2d) %-${padding}s" $(( idx + 1 )) "${fname}" )"
 			else
 				# still keep space for "x) " - 4 spaces for formating correctly
 				rowX="${rowX}$( printf "    %-${padding}s" "" )"
@@ -99,17 +150,32 @@ _fn_list() {
 		fnList="${fnList}${rowX}"
 	done
 	fnList="${fnList%'\n'}" # remove 2 chars at end of string out '\n', or using: ${out%??}
-	# echo "rowlen: $rowLen, padding: $padding,"
+	
 	rf_log_title "${title}" "${fnList}" "no" ${rowLen}
 }
 
 
 help() {
 	local str="
-$0 <task> <args>
-	or simple (by alias run=$0):
-run <task> <args>
+run <fn_name> <args>
+run help alias
+	=> to show alias fn list only
+run help rf
+	=> to show internal rf fn only
 "
+	local cmd=${1}
+	if [[ "${cmd}" == "alias" ]]; then
+		# show alias
+		_fn_list "alias_" "" "alias fn(s)" "alias"
+		exit 0
+	fi
+	if [[ "${cmd}" == "rf" ]]; then
+		# show alias
+		_fn_list "rf_" "" "rf fn(s)"
+		exit 0
+	fi
+
+	# else, show all
 	rf_log_title "Usage" "${str}"
 	#
 	_fn_list "rf_" "" "runfile fn(s)"
@@ -129,10 +195,11 @@ __fn_list_check() {
 	# -> show user functions only
 	# -> hide functions start with _ and rf_
 	if [[ -z "${cmd}" ]]; then
-		_fn_list "alias_" "" "alias fn(s)" "alias"
+		# _fn_list "alias_" "" "alias fn(s)" "alias"
 		_fn_list "" "_ rf_ alias_" "user fn(s)"
 		exit 0
 	fi
+	
 
 	# return user functions and build-in function, exclude internal function (start with _)
 	local __fn_list=$(_fn_list_by "" "_")

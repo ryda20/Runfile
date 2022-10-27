@@ -1,28 +1,36 @@
 #/bin/bash
 
 #
+## Note: the format of function description as below:
+# fn_name: description
+# and must unique
+
+
+#
 ## go work
 #
 
-# alias gwe for go work edit
-alias_gwe() {
+
+#alias_gowe: go work edit
+alias_gowe() {
 	echo "run: go work edit $@"
 	go work edit $@
 }
-# alias gwi for go work init
-alias_gwi() {
+
+#alias_gowi: go work init
+alias_gowi() {
 	echo "run: go work init $@"
 	go work init $@
 }
 
-# alias gws for go work sync
-alias_gws(){
+#alias_gows: go work sync
+alias_gows(){
 	echo "run: go work sync $@"
 	go work sync $@
 }
 
-# alias gwu for go work use
-alias_gwu() {
+#alias_gowu: go work use
+alias_gowu() {
 	echo "run: go work use ${@}"
 	# translate to: go work use
 	# alias_cmd=go
@@ -34,42 +42,98 @@ alias_gwu() {
 #
 ## go mod
 #
-alias_gmd() {
+
+#alias_gomd: go mod download
+alias_gomd() {
 	echo "run: go mod download ${@}"
 	go mod download "$@"
 }
 
-alias_gme() {
+#alias_gome: go mod edit
+alias_gome() {
 	echo "run: go mod edit ${@}"
 	go mod edit "$@"
 }
 
-alias_gmg() {
+#alias_gomg: go mod graph
+alias_gomg() {
 	echo "run: go mod graph ${@}"
 	go mod graph "$@"
 }
 
-alias_gmi() {
+#alias_gomi: go mod init
+alias_gomi() {
 	echo "run: go mod init ${@}"
 	go mod init "$@"
 }
 
-alias_gmt() {
+#alias_gomt: go mod tidy
+alias_gomt() {
 	echo "run: go mod tidy ${@}"
 	go mod tidy "$@"
 }
 
-alias_gmv() {
+#alias_gomv: go mod vendor
+alias_gomv() {
 	echo "run: go mod vendor ${@}"
 	go mod vendor "$@"
 }
 
-alias_gmvr() {
+#alias_gomvy: go mod verify
+alias_gomvy() {
 	echo "run: go mod verify ${@}"
 	go mod verify "$@"
 }
 
-alias_gmw() {
+#alias_gomw: go mod why
+alias_gomw() {
 	echo "run: go mod why ${@}"
 	go mod why "$@"
+}
+
+# run go, then select available keyworks
+go() {
+	local cmd=${1}; shift
+	local args=${@}
+	# echo "cmd: ${cmd}, args: ${agrc}"
+	padding=30
+	local str=""
+	str="${str}$( printf "%-${padding}s" "mi: mod init")"
+	str="${str}$( printf "%-${padding}s" "mw: mod why")"
+	str="${str}$( printf "%-${padding}s" "mv: mod vendor")\n"
+
+	str="${str%'\n'}"
+	
+	rf_log_title "commands" "${str}" "no"
+	rf_log " Press qq to exit"
+
+	while : ; do
+		# doc 2 ky tu, wait 15s
+		read -n 2 -t 15 a
+		# printf "\n"
+		case $a in
+			mi*)
+				printf "\n"
+				a=""
+				echo "go mod init"
+				;;
+			mv*)
+				printf "\n"
+				a=""
+				echo "go mod vender"
+				;;
+			mw*)
+				printf "\n"
+				a=""
+				echo "go mod why";;
+			q*)
+				exit 0;;
+			*)
+				clear
+				echo -e "${str}"
+				rf_log_title "commands" "${str}" "no"
+				rf_log " Press qq to exit"
+				;;
+		esac
+	done
 }
