@@ -5,3 +5,7 @@ COLUMN_NUMBER=${RF_COLUMN_NUMB:-3}
 LINE_LEN=${RF_LINE_WIDTH:-100}
 LINE_LEN_ALIAS=0
 TIMEFORMAT="Task completed in %3lR"
+# working mode:
+# 	loop: run inside while loop and user does not need to run with `run` command, just type the command user want
+#	normal: run with `run` command: run task args
+MODE=${RF_MODE:-loop}
