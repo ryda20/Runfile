@@ -9,7 +9,23 @@ This repository contains the default Runfile template for getting started in you
 ```
 
 ## Usage
+### Two operation mode: NORMAL and LOOP
+    You can change the mode by change RF_MODE env to `loop` or `normal`
+1. The Normal mode:
+    
+    Working in normally way, type `run task args` then `enter` to execute command.
 
+2. The Loop mode (default):
+   
+   Working in a infinite loop, you don't need to type `run task args` anymore. 
+   
+   Type `run` or `./Runfile` to start.
+
+   Then, you just need to type `task args` then `enter` to run task
+
+   ```Note: you can run any bash command, too```
+
+### Create Runfile:
 Open your directory and run `run-init` to add the default Runfile template to your project directory:
 
 ```sh
@@ -18,6 +34,8 @@ Open your directory and run `run-init` to add the default Runfile template to yo
 ```
 
 A Runfile will created and you just open it up, adding your tasks (bash script function).
+
+### Example (normal mode):
 To see all your define tasks, just type `run` from terminal
 
 ```sh
@@ -47,7 +65,7 @@ To see all your define tasks, just type `run` from terminal
     Task completed in 0m0.027s
 ```
 
-Available examples:
+Run the Runfile functions:
 ```sh
     $ run rf_ex1
     #### Example ####====================================================================================#
