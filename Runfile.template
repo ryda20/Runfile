@@ -183,7 +183,7 @@ run help rf
 	fi
 
 	# else, show all
-	if [[ "${MODE}" == "loop" ]]; then _rf_exit_msg; fi
+	if [[ "${MODE}" == "loop" ]]; then _fn_exit_msg; fi
 	# rf_log_title "Usage" "${str}"
 	#
 	# _fn_list "rf_" "" "runfile fn(s)"
@@ -205,32 +205,19 @@ __fn_list_check_normal () {
 		_fn_list "" "_ rf_ alias_" "user fn(s)"
 		return
 	fi
-	
-	
-	# return user functions and build-in function, exclude internal function (start with _)
-	local __fn_list=$(_fn_list_by "" "_")
-	# check for alias first, if not have, check for normally function
-	# check ${cmd} to see if it available in fn_list
-	# note: we add space before and after __fn_list and first_cmd to make sure we are compairing full word
-	# because we will go wrong if:
-	# Ex: __fn_list = "abc edf ght dgr"
-	# Case : cmd = ab or df or gr,... -> command will valid (because we use * in comparation)
-	# Fix: __fn_list 	= " abc edf ght dgr "
-	# 			cmd 	= " search " =>
-	# => " abc " -> valid, but, " ab " -> not valid
-	if [[ " ${__fn_list} " == *" alias_${cmd} "* ]]; then
-		# echo "command \`${cmd}\` is alias -> call alias fn"
-		alias_${cmd} ${args}
-	elif [[ " ${__fn_list} " == *" ${cmd} "* ]] || [[ -f $(which ${cmd}) ]]; then
-		# cmd is a runfile command or system command, so, just run it
-		${cmd} ${args}
-	else
-		echo "command \`${cmd}\` is not valid"
+	# check if the ${cmd} available or not (build-in command or user command, functions, alias function)
+	# https://stackoverflow.com/questions/592620/how-can-i-check-if-a-program-exists-from-a-bash-script
+	check=$( command -v ${cmd} ) || $( command -v alias_${cmd} )
+	if [[ -z ${check} ]]; then
+		echo "command \"${cmd}\" couln't be found!"
+		return
 	fi
+	# execute the command with args
+	eval ${cmd} ${args}
 	
 }
 
-_rf_exit_msg() {
+_fn_exit_msg() {
 	rf_log_title "cmd(s)" "
 	qq:              exit
 	reload:          reload session
@@ -240,7 +227,7 @@ _rf_exit_msg() {
 # run with command: `run`, then user can call task by type `task_name args`
 __fn_list_check_loop() {
 	#
-	_rf_exit_msg
+	_fn_exit_msg
 
 	local cmd=""
 	local args=""
@@ -254,11 +241,8 @@ __fn_list_check_loop() {
 		read cmd args
 
 		case $cmd in
-			qq)
-				exit 0;;
-			reload)
-				clear
-				exec bash -c "./Runfile";;
+			qq) exit 0;;
+			reload) clear && exec bash -c "./Runfile";;
 			*)
 				# if no input: ${#cmd} -eq 0. Nothing to check 
 				# -> show user functions only
@@ -269,29 +253,19 @@ __fn_list_check_loop() {
 					continue
 				fi
 				
-				# return user functions and build-in function, exclude internal function (start with _)
-				# local __fn_list=$(_fn_list_by "" "_")
-
-				# check for alias first, if not have, check for normally function
-				# check ${cmd} to see if it available in fn_list
-				# note: we add space before and after __fn_list and first_cmd to make sure we are compairing full word
-				# because we will go wrong if:
-				# Ex: __fn_list = "abc edf ght dgr"
-				# Case : cmd = ab or df or gr,... -> command will valid (because we use * in comparation)
-				# Fix: __fn_list 	= " abc edf ght dgr "
-				# 			cmd 	= " search " =>
-				# => " abc " -> valid, but, " ab " -> not valid
-				if [[ " ${__fn_list} " == *" alias_${cmd} "* ]]; then
-					# echo "command \`${cmd}\` is alias -> call alias fn"
-					time alias_${cmd} ${args}
-					echo
-				elif [[ " ${__fn_list} " == *" ${cmd} "* ]] || [[ -f $(which ${cmd}) ]]; then
-					# cmd is a runfile command or system command, so, run it
-					time ${cmd} ${args}
-					echo # just make newline
+				# check if the ${cmd} available or not (build-in command or user command, functions, alias function)
+				# https://stackoverflow.com/questions/592620/how-can-i-check-if-a-program-exists-from-a-bash-script
+				# check if $cmd is a valid command
+				if [[ -n $( command -v ${cmd} ) ]]; then
+					# execute the command with args
+					echo "cmd: ${cmd}, args: ${args}"
+					time eval ${cmd} "${args}"
+				elif [[ -n $( command -v alias_${cmd} ) ]]; then
+					# execute the command with args
+					echo "cmd: ${cmd}, args: ${args}"
+					time eval alias_${cmd} "${args}"
 				else
-					echo "command \`${cmd}\` is not valid"
-					echo
+					echo "command \"${cmd}\" couln't be found!"
 				fi
 		esac
 	done
