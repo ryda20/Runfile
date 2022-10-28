@@ -12,6 +12,8 @@ I use it to replace with my Makefile because i have some difficulty to write bas
 
 ```sh
     bash -c "$(curl -fsSL https://gitlab.com/ryda20/runfile/-/raw/master/install.sh)"
+    or
+    bash -c "$(curl -fsSL https://raw.githubusercontent.com/ryda20/Runfile/master/install.sh)"
 ```
 
 ## Usage
