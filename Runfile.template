@@ -115,6 +115,12 @@ _fn_list() {
 	local description=""
 	# if [[ ${alias} == "alias" ]]; then columns=6; fi
 	local padding=$(( LINE_LEN / columns - 4 )) # -4 because we added 4 char `%2d) ` and we don't want to increse line len more
+	
+	if [[ ${arr_len} -eq 0 ]]; then
+		rf_log " not found any fn(s). Run: \`run help\` to see all defined fn(s)"
+		return;
+	fi
+	
 	for (( i=0; i < arr_len; i+=columns)); do
 		local rowX="# " # `# ` 	-> + 2 chars
 		for (( j=0; j < columns; j++ )); do
@@ -154,7 +160,6 @@ _fn_list() {
 	rf_log_title "${title}" "${fnList}" "no" ${rowLen}
 }
 
-
 help() {
 	local str="
 run <fn_name> <args>
@@ -170,15 +175,15 @@ run help rf
 	if [[ "${cmd}" == "alias" ]]; then
 		# show alias
 		_fn_list "alias_${alias_filter}" "" "alias fn(s)" "alias"
-		exit 0
+		return
 	fi
 	if [[ "${cmd}" == "rf" ]]; then
 		_fn_list "rf_" "" "rf fn(s)"
-		exit 0
+		return
 	fi
 
 	# else, show all
-	rf_log_title "Usage" "${str}"
+	# rf_log_title "Usage" "${str}"
 	#
 	_fn_list "rf_" "" "runfile fn(s)"
 	_fn_list "alias_" "" "alias fn(s)" "alias"
@@ -186,53 +191,117 @@ run help rf
 }
 
 
-# __fn_list_check will check input command and validation before execute
-# dont change this function name to ensure the app works after you update.
-# if you want to change, make sure change in Runfile (time __fn_list_check), too
-__fn_list_check() {
-	local cmd=${1}; shift
-	local args=$@
+# __fn_list_check_normal will check input command and validation before execute
+# run with command: `run task args`
+__fn_list_check_normal () {
+	local cmd="${1}";shift
+	local args="$@"
 
 	# if no input: ${#cmd} -eq 0. Nothing to check 
 	# -> show user functions only
-	# -> hide functions start with _ and rf_
+	# -> hide functions start with _ and rf_ and alias_
 	if [[ -z "${cmd}" ]]; then
-		# _fn_list "alias_" "" "alias fn(s)" "alias"
 		_fn_list "" "_ rf_ alias_" "user fn(s)"
-		exit 0
+		return
 	fi
 	
-
+	
 	# return user functions and build-in function, exclude internal function (start with _)
 	local __fn_list=$(_fn_list_by "" "_")
-
 	# check for alias first, if not have, check for normally function
 	# check ${cmd} to see if it available in fn_list
 	# note: we add space before and after __fn_list and first_cmd to make sure we are compairing full word
 	# because we will go wrong if:
-	# ex: __fn_list = "abc edf ght dgr"
+	# Ex: __fn_list = "abc edf ght dgr"
 	# Case : cmd = ab or df or gr,... -> command will valid (because we use * in comparation)
-	# Fix:
-	# __fn_list = " abc edf ght dgr "
-	# cmd = " search " =>
-	# " abc " -> valid, but
-	# " ab " -> not valid
+	# Fix: __fn_list 	= " abc edf ght dgr "
+	# 			cmd 	= " search " =>
+	# => " abc " -> valid, but, " ab " -> not valid
 	if [[ " ${__fn_list} " == *" alias_${cmd} "* ]]; then
-		# echo "command \`${cmd}\` is alias"
-		# call alias
+		# echo "command \`${cmd}\` is alias -> call alias fn"
 		alias_${cmd} ${args}
-	elif [[ " ${__fn_list} " != *" ${cmd} "* ]]; then
-		echo "command \`${cmd}\` is not valid"
-		exit 1
-	else
-		# echo "valid command: ${cmd} ${args}"
+	elif [[ " ${__fn_list} " == *" ${cmd} "* ]] || [[ -f $(which ${cmd}) ]]; then
+		# cmd is a runfile command or system command, so, just run it
 		${cmd} ${args}
+	else
+		echo "command \`${cmd}\` is not valid"
 	fi
+	
 }
 
+_rf_exit_msg() {
+	rf_log " cmd(s):
+	qq:\t\texit
+	reload:\t\treload session
+	help:\t\tshow help"
+	echo
+}
+# __fn_list_check_loop will check input command and validation before execute
+# run with command: `run`, then user can call task by type `task_name args`
+__fn_list_check_loop() {
+	#
+	_rf_exit_msg
+
+	local cmd=""
+	local args=""
+	# return user functions and build-in function, exclude internal function (start with _)
+	local __fn_list=$(_fn_list_by "" "_")
+
+	while : ; do
+		# doc 2 ky tu, wait 15s, -n: auto check input key if match, will execute
+		# no -n, use must enter
+		# read -n 2 -t 15 a
+		read cmd args
+
+		case $cmd in
+			qq)
+				exit 0;;
+			reload)
+				clear
+				exec bash -c "./Runfile";;
+			*)
+				# if no input: ${#cmd} -eq 0. Nothing to check 
+				# -> show user functions only
+				# -> hide functions start with _ and rf_ and alias_
+				if [[ -z "${cmd}" ]]; then
+					time _fn_list "" "_ rf_ alias_" "user fn(s)"
+					echo
+					continue
+				fi
+				
+				# return user functions and build-in function, exclude internal function (start with _)
+				# local __fn_list=$(_fn_list_by "" "_")
+
+				# check for alias first, if not have, check for normally function
+				# check ${cmd} to see if it available in fn_list
+				# note: we add space before and after __fn_list and first_cmd to make sure we are compairing full word
+				# because we will go wrong if:
+				# Ex: __fn_list = "abc edf ght dgr"
+				# Case : cmd = ab or df or gr,... -> command will valid (because we use * in comparation)
+				# Fix: __fn_list 	= " abc edf ght dgr "
+				# 			cmd 	= " search " =>
+				# => " abc " -> valid, but, " ab " -> not valid
+				if [[ " ${__fn_list} " == *" alias_${cmd} "* ]]; then
+					# echo "command \`${cmd}\` is alias -> call alias fn"
+					time alias_${cmd} ${args}
+					echo
+				elif [[ " ${__fn_list} " == *" ${cmd} "* ]] || [[ -f $(which ${cmd}) ]]; then
+					# cmd is a runfile command or system command, so, run it
+					time ${cmd} ${args}
+					echo # just make newline
+				else
+					echo "command \`${cmd}\` is not valid"
+				fi
+		esac
+	done
+}
 
 
 # __start_app must to call this function at the end of user Runfile
 __start_app() {
-	time __fn_list_check ${@}
+	if [[ "${MODE}" == "loop" ]]; then
+		__fn_list_check_loop "$@"
+	else
+		time __fn_list_check_normal "$@"
+	fi
 }

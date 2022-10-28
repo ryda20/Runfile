@@ -2,7 +2,13 @@
 source ${RF_DIR:-~/.Runfile}/Runfile.template # MUST_START_OF_FILE
 ##regison USER ===================================================
 
+abc() {
+	echo "Abc task"
+}
 
+abc2() {
+	echo "abc2 task"
+}
 
 ##endregion USER =================================================
 __start_app ${@} # MUST_END_OF_FILE
