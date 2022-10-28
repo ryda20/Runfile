@@ -1,6 +1,12 @@
 # Runfile
 
-This repository contains the default Runfile template for getting started in your own projects. A Runfile is a bash (or zsh etc.) script that follows a specific format. It's called `Runfile`, sits in the root of your project and contains the tasks to build your project.
+This repository contains the default Runfile template for getting started in your own projects.
+
+A Runfile is a bash (or zsh etc.) script only.
+
+You can define the `task` you want to do by write new function in the Runfile.
+
+I use it to replace with my Makefile because i have some difficulty to write bash code in Makefile for some cases and i don't want to write bash scripts in the Makefile. It's personally :)
 
 ## Install
 
