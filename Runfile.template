@@ -231,30 +231,31 @@ _fn_reload() {
 	clear && exec bash -c "${RUNFILE_FILE}"
 }
 
+
 _fn_git_exist() {
 	if [[ -n "$( command -v git )" ]] && [[ -d "${RUNFILE_DIR}/.git" ]]; then 
 		echo "yes"
 	fi
 	echo ""
 }
-
+_GIT_EXIST="$(_fn_git_exist)"
 _fn_git_info_start() {
 	local gitstr=""
-	if [[ -n "$(_fn_git_exist)" ]]; then 
-		gitstr=" git:("
+	if [[ -n "${_GIT_EXIST}" ]]; then 
+		gitstr="git:("
 	fi
 	echo "${gitstr}"
 }
 _fn_git_info_mid(){
 	local gitstr=""
-	if [[ -n "$(_fn_git_exist)" ]]; then 
+	if [[ -n "${_GIT_EXIST}" ]]; then 
 		gitstr="$( git rev-parse --abbrev-ref HEAD )"
 	fi
 	echo "${gitstr}"
 }
 _fn_git_info_end() {
 	local gitstr=""
-	if [[ -n "$(_fn_git_exist)" ]]; then 
+	if [[ -n "${_GIT_EXIST}" ]]; then 
 		gitstr=") "
 	fi
 	echo "${gitstr}"
@@ -262,16 +263,17 @@ _fn_git_info_end() {
 #STATUS=$(__git_prompt_git status ${FLAGS} 2> /dev/null | tail -n 1)
 _fn_git_status() {
 	local gitstr=""
-	if [[ -n "$(_fn_git_exist)" ]]; then 
+	if [[ -n "${_GIT_EXIST}" ]]; then 
 		status=$(git status --porcelain --untracked-files=no --ignore-submodules=dirty | tail -n 1)
 		if [[ -n "$status" ]]; then
-			gitstr="✗"
+			gitstr=$'\e[31m'"✗ "
 		else
-			gitstr="✔"
+			gitstr="✔ "
 		fi
 	fi
 	echo "${gitstr}"
 }
+
 # __fn_list_check_loop will check input command and validation before execute
 # run with command: `run`, then user can call task by type `task_name args`
 __fn_list_check_loop() {
@@ -282,10 +284,6 @@ __fn_list_check_loop() {
 	local args=""
 	# return user functions and build-in function, exclude internal function (start with _)
 	local __fn_list=$(_fn_list_by "" "_")
-
-	local PS1="[$USER@$HOSTNAME:$(pwd) ] $ "
-	local current_path
-	local current_user
 	
 	# make a copy of Runfile
 	if [[ "${AUTO_RELOAD}" == "yes" ]]; then
@@ -299,6 +297,7 @@ __fn_list_check_loop() {
 	#
 	local git_info_start=$(_fn_git_info_start)
 	local git_info_end=$(_fn_git_info_end)
+	local sign=$( if [[ "$USER" != "root" ]]; then echo $'\e[32m'"\$ "; else echo $'\e[31m'"\# "; fi )
 
 	while true ; do
 
@@ -309,13 +308,14 @@ __fn_list_check_loop() {
 		fi
 		path_now=$( pwd )
 		if [[ "${path_pre}" != "${path_now}" ]]; then
-			path_pre=${path_now}
+			path_pre="${path_now}"
 			#
-			path_for=$( echo "${path_now}" | sed -e s@$HOME@'~'@g )
-			path_for=$( basename ${path_for} )
+			path_for="$( echo "${path_now}" | sed -e s@$HOME@'~'@g )"
+			path_for="$( basename ${path_for} ) "
 		fi
 		
-		read -e -t ${AUTO_RELOAD_TIME} -p $'\e[32m➜ '"${path_for}"$'\e[34m'"${git_info_start}"$'\e[31m'"$( _fn_git_info_mid )"$'\e[34m'"${git_info_end}"$'\e[36m'"$(_fn_git_status)"$'\e[0m ' cmd args
+		# -e for tab completion on dir or file name
+		read -e -p 	$'\e[32m➜ '"${path_for}"$'\e[34m'"${git_info_start}"$'\e[31m'"$( _fn_git_info_mid )"$'\e[34m'"${git_info_end}"$'\e[36m'"$(_fn_git_status)${sign}"$'\e[0m' cmd args
 		
 
 		case $cmd in
