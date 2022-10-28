@@ -228,7 +228,36 @@ _fn_exit_msg() {
 }
 
 _fn_reload() {
-	clear && exec bash -c "${RUNFILE}"
+	clear && exec bash -c "${RUNFILE_FILE}"
+}
+
+_fn_git_exist() {
+	if [[ -n "$( command -v git )" ]] && [[ -d "${RUNFILE_DIR}/.git" ]]; then 
+		echo "yes"
+	fi
+	echo ""
+}
+
+_fn_git_info_start() {
+	local gitstr=""
+	if [[ -n "$(_fn_git_exist)" ]]; then 
+		gitstr="git:("
+	fi
+	echo "${gitstr}"
+}
+_fn_git_info_mid(){
+	local gitstr=""
+	if [[ -n "$(_fn_git_exist)" ]]; then 
+		gitstr="$( git rev-parse --abbrev-ref HEAD )"
+	fi
+	echo "${gitstr}"
+}
+_fn_git_info_end() {
+	local gitstr=""
+	if [[ -n "$(_fn_git_exist)" ]]; then 
+		gitstr=") ✗"
+	fi
+	echo "${gitstr}"
 }
 
 # __fn_list_check_loop will check input command and validation before execute
@@ -248,29 +277,34 @@ __fn_list_check_loop() {
 	
 	# make a copy of Runfile
 	if [[ "${AUTO_RELOAD}" == "yes" ]]; then
-		rm -rf "${RUNFILE_BK}"
-		cp "${RUNFILE}" "${RUNFILE_BK}"
+		rm -rf "${RUNFILE_FILE_BK}"
+		cp "${RUNFILE_FILE}" "${RUNFILE_FILE_BK}"
 	fi
+	#
+	local path_for=""
+	local path_now=""
+	local path_pre=""
+	#
+	local git_info_start=$(_fn_git_info_start)
+	local git_info_end=$(_fn_git_info_end)
 
 	while true ; do
+
 		# check if Runfile changed
-		if [[ "${AUTO_RELOAD}" == "yes" ]] && [[ "${RUNFILE}" -nt "$RUNFILE_BK" ]]; then
+		if [[ "${AUTO_RELOAD}" == "yes" ]] && [[ "${RUNFILE_FILE}" -nt "$RUNFILE_FILE_BK" ]]; then
 			#echo "Runfile was changed"
 			_fn_reload
 		fi
-
-
-		current_path=$( pwd | sed -e s@$HOME@'~'@g )
-		current_path=$( basename $current_path )
-		current_user=$( [ "$USER" != "root" ] && echo \$ || echo \# )
-		PS1="[$USER@$HOSTNAME: $current_path] $current_user "
-		# doc 2 ky tu, wait 15s, -n: auto check input key if match, will execute
-		# no -n, use must enter
-		# read -n 2 -t 15 a
-		# read -p "prompt text only"
-		# wait time: using AUTO_RELOAD_TIME
-		read -e -t ${AUTO_RELOAD_TIME} -p $'\e[31m'"${PS1}"$'\e[0m' cmd args
-
+		path_now=$( pwd )
+		if [[ "${path_pre}" != "${path_now}" ]]; then
+			path_pre=${path_now}
+			#
+			path_for=$( echo "${path_now}" | sed -e s@$HOME@'~'@g )
+			path_for=$( basename ${path_for} )
+		fi
+		
+		read -e -t ${AUTO_RELOAD_TIME} -p $'\e[32m➜ '"${path_for} ${git_info_start}"$'\e[31m'"$( _fn_git_info_mid )"$'\e[32m'"${git_info_end}"$'\e[0m ' cmd args
+		
 		case $cmd in
 			q) exit 0;;
 			r) _fn_reload;;
