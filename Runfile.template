@@ -183,10 +183,11 @@ run help rf
 	fi
 
 	# else, show all
+	if [[ "${MODE}" == "loop" ]]; then _rf_exit_msg; fi
 	# rf_log_title "Usage" "${str}"
 	#
-	_fn_list "rf_" "" "runfile fn(s)"
-	_fn_list "alias_" "" "alias fn(s)" "alias"
+	# _fn_list "rf_" "" "runfile fn(s)"
+	# _fn_list "alias_" "" "alias fn(s)" "alias"
 	_fn_list "" "_ rf_ alias_" "user fn(s)"
 }
 
@@ -230,11 +231,10 @@ __fn_list_check_normal () {
 }
 
 _rf_exit_msg() {
-	rf_log " cmd(s):
-	qq:\t\texit
-	reload:\t\treload session
-	help:\t\tshow help"
-	echo
+	rf_log_title "cmd(s)" "
+	qq:              exit
+	reload:          reload session
+	help [rf|alias]: show help"
 }
 # __fn_list_check_loop will check input command and validation before execute
 # run with command: `run`, then user can call task by type `task_name args`
@@ -291,6 +291,7 @@ __fn_list_check_loop() {
 					echo # just make newline
 				else
 					echo "command \`${cmd}\` is not valid"
+					echo
 				fi
 		esac
 	done
