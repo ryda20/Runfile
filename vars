@@ -9,3 +9,8 @@ TIMEFORMAT="Task completed in %3lR"
 # 	loop: run inside while loop and user does not need to run with `run` command, just type the command user want
 #	normal: run with `run` command: run task args
 MODE=${RF_MODE:-loop}
+
+RUNFILE="$(pwd)/Runfile"
+RUNFILE_BK="/tmp/RunfileBk"
+AUTO_RELOAD=${RF_AUTO_RELOAD:-"no"}
+AUTO_RELOAD_TIME=${RF_AUTO_RELOAD_TIME:-60}

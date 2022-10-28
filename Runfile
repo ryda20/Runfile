@@ -6,4 +6,4 @@ source ${RF_DIR:-~/.Runfile}/Runfile.template # MUST_START_OF_FILE
 
 
 ##endregion USER =================================================
-__start_app ${@} # MUST_END_OF_FILE
+__start_app "$@" # MUST_END_OF_FILE
