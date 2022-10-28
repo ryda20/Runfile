@@ -267,7 +267,7 @@ _fn_git_status() {
 		if [[ -n "$status" ]]; then
 			gitstr="✗"
 		else
-			gitstr="✗"
+			gitstr="✔"
 		fi
 	fi
 	echo "${gitstr}"
@@ -315,7 +315,7 @@ __fn_list_check_loop() {
 			path_for=$( basename ${path_for} )
 		fi
 		
-		read -e -t ${AUTO_RELOAD_TIME} -p $'\e[32m➜ '"${path_for} "$'\e[34m'"${git_info_start}"$'\e[31m'"$( _fn_git_info_mid )"$'\e[34m'"${git_info_end}"$'\e[0m ' cmd args
+		read -e -t ${AUTO_RELOAD_TIME} -p $'\e[32m➜ '"${path_for} "$'\e[34m'"${git_info_start}"$'\e[31m'"$( _fn_git_info_mid )"$'\e[34m'"${git_info_end} "$'\e[36m'"$(_fn_git_status)"$'\e[0m ' cmd args
 		
 		case $cmd in
 			q) exit 0;;
