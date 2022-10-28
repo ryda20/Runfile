@@ -205,15 +205,19 @@ __fn_list_check_normal () {
 		_fn_list "" "_ rf_ alias_" "user fn(s)"
 		return
 	fi
+	
 	# check if the ${cmd} available or not (build-in command or user command, functions, alias function)
 	# https://stackoverflow.com/questions/592620/how-can-i-check-if-a-program-exists-from-a-bash-script
-	check=$( command -v ${cmd} ) || $( command -v alias_${cmd} )
-	if [[ -z ${check} ]]; then
+	# check if $cmd is a valid command
+	if [[ -n $( command -v ${cmd} ) ]]; then
+		# execute the command with args
+		eval ${cmd} "${args}"
+	elif [[ -n $( command -v alias_${cmd} ) ]]; then
+		# execute alias function with args
+		eval alias_${cmd} "${args}"
+	else
 		echo "command \"${cmd}\" couln't be found!"
-		return
 	fi
-	# execute the command with args
-	eval ${cmd} ${args}
 	
 }
 
@@ -258,11 +262,9 @@ __fn_list_check_loop() {
 				# check if $cmd is a valid command
 				if [[ -n $( command -v ${cmd} ) ]]; then
 					# execute the command with args
-					echo "cmd: ${cmd}, args: ${args}"
 					time eval ${cmd} "${args}"
 				elif [[ -n $( command -v alias_${cmd} ) ]]; then
-					# execute the command with args
-					echo "cmd: ${cmd}, args: ${args}"
+					# execute alias function with args
 					time eval alias_${cmd} "${args}"
 				else
 					echo "command \"${cmd}\" couln't be found!"
