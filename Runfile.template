@@ -294,14 +294,34 @@ __fn_list_check_loop() {
 	local path_for=""
 	local path_now=""
 	local path_pre=""
+	__path_auto_format(){
+		path_now=$( pwd )
+		if [[ "${path_pre}" != "${path_now}" ]]; then
+			path_pre="${path_now}"
+			#
+			path_for="$( echo "${path_now}" | sed -e s@$HOME@'~'@g )"
+			path_for="${GREEN}$( basename ${path_for} ) "
+		fi
+	}
 	#
 	local git_info_start=$(_fn_git_info_start)
 	local git_info_end=$(_fn_git_info_end)
 	local sign=$( if [[ "$USER" != "root" ]]; then echo "${BLUE}\$ "; else echo "${RED}\# "; fi )
 	
-	local arrow="${GREEN}➜ [r] "
-	
-	
+	local arrow_red="${RED}➜ [r] "
+	local arrow_green="${GREEN}➜ [r] "
+	local arrow=${arrow_green}
+	__arrow_auto_set() {
+		exitcode=$?
+		# echo "__arrow_auto_set -> exitcode: $exitcode"
+		if [[ $exitcode -gt 0 ]]; then 
+			arrow=${arrow_red}
+			# echo "arrow to red"
+		else 
+			arrow=${arrow_green}
+			# echo "arrow to green"
+		fi
+	}
 	
 	while true ; do
 
@@ -310,13 +330,15 @@ __fn_list_check_loop() {
 			#echo "Runfile was changed"
 			_fn_reload
 		fi
-		path_now=$( pwd )
-		if [[ "${path_pre}" != "${path_now}" ]]; then
-			path_pre="${path_now}"
-			#
-			path_for="$( echo "${path_now}" | sed -e s@$HOME@'~'@g )"
-			path_for="$( basename ${path_for} ) "
-		fi
+
+		__path_auto_format
+		# path_now=$( pwd )
+		# if [[ "${path_pre}" != "${path_now}" ]]; then
+		# 	path_pre="${path_now}"
+		# 	#
+		# 	path_for="$( echo "${path_now}" | sed -e s@$HOME@'~'@g )"
+		# 	path_for="${GREEN}$( basename ${path_for} ) "
+		# fi
 		
 		# -e for tab completion on dir or file name
 		read -e -p "${arrow}${path_for}${git_info_start}$( _fn_git_info_mid )${git_info_end}$(_fn_git_status)${sign}${COLOR_RESET}" cmd args
@@ -346,7 +368,11 @@ __fn_list_check_loop() {
 					time eval alias_${cmd} "${args}"
 				else
 					echo "command \"${cmd}\" couln't be found!"
+					# set $? - return code without exit shell
+					# actually it run in subshell and exit subshell
+					( exit 1 ) 
 				fi
+				__arrow_auto_set
 		esac
 	done
 }

@@ -10,7 +10,44 @@ abc2() {
 	echo "abc2 task"
 }
 
+exitcode() {
+	echo "this task will failed"
+	( exit 33 ) # return exit code without close shell - actualy exit sub shell
+}
 
+# test variable scope
+# -> varialbe x can be change inside tt function and sub function
+# but outside is not change, it like inside function it create another 
+# variable x after the line: x="first"
+x="out"
+tt() {
+	echo -e "[tt] init: x=$x"
+	x="first"
+	echo -e "[tt] changed: x=$x"
+	tt1() {
+		echo -e "\t[tt1] x=$x"
+		x="second"
+		echo -e "\t[tt1] =$x"
+	}
+	tt1
+	echo -e "[tt]=$x => changed inside: $( [[ "$x" == "out" ]] && echo "no" || echo "yes" )"
+}
+tt_check() {
+	echo -e "changed outside? $( [[ "$x" != "out" ]] && echo "no" || echo "yes" )"
+}
+
+tt2() {
+	echo -e "[tt2] init: x=$x"
+	local x="first"
+	echo -e "[tt2] changed: x=$x"
+	tt22() {
+		echo -e "\t[tt22] x=$x"
+		x="second"
+		echo -e "\t[tt22] =$x"
+	}
+	tt22
+	echo -e "[tt2]=$x => changed: $( [[ "$x" == "out" ]] && echo "no" || echo "yes" )"
+}
 
 
 ##endregion USER =================================================
