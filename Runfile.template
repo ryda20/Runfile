@@ -232,47 +232,7 @@ _fn_reload() {
 }
 
 
-_fn_git_exist() {
-	if [[ -n "$( command -v git )" ]] && [[ -d "${RUNFILE_DIR}/.git" ]]; then 
-		echo "yes"
-	fi
-	echo ""
-}
-_GIT_EXIST="$(_fn_git_exist)"
-_fn_git_info_start() {
-	local gitstr=""
-	if [[ -n "${_GIT_EXIST}" ]]; then 
-		gitstr="git:("
-	fi
-	echo "${BLUE}${gitstr}"
-}
-_fn_git_info_mid(){
-	local gitstr=""
-	if [[ -n "${_GIT_EXIST}" ]]; then 
-		gitstr="$( git rev-parse --abbrev-ref HEAD )"
-	fi
-	echo "${RED}${gitstr}"
-}
-_fn_git_info_end() {
-	local gitstr=""
-	if [[ -n "${_GIT_EXIST}" ]]; then 
-		gitstr=") "
-	fi
-	echo "${BLUE}${gitstr}"
-}
-#STATUS=$(__git_prompt_git status ${FLAGS} 2> /dev/null | tail -n 1)
-_fn_git_status() {
-	local gitstr=""
-	if [[ -n "${_GIT_EXIST}" ]]; then 
-		status=$(git status --porcelain --untracked-files=no --ignore-submodules=dirty | tail -n 1)
-		if [[ -n "$status" ]]; then
-			gitstr="${RED}✗ "
-		else
-			gitstr="${GREEN}✔ "
-		fi
-	fi
-	echo "${gitstr}"
-}
+
 
 # __fn_list_check_loop will check input command and validation before execute
 # run with command: `run`, then user can call task by type `task_name args`
@@ -280,20 +240,12 @@ __fn_list_check_loop() {
 	#
 	_fn_exit_msg
 
-	local cmd=""
-	local args=""
+	declare cmd args
 	# return user functions and build-in function, exclude internal function (start with _)
-	local __fn_list=$(_fn_list_by "" "_")
+	__fn_list=$(_fn_list_by "" "_")
 	
-	# make a copy of Runfile
-	if [[ "${AUTO_RELOAD}" == "yes" ]]; then
-		rm -rf "${RUNFILE_FILE_BK}"
-		cp "${RUNFILE_FILE}" "${RUNFILE_FILE_BK}"
-	fi
 	#
-	local path_for=""
-	local path_now=""
-	local path_pre=""
+	local path_for path_now path_pre
 	__path_auto_format(){
 		path_now=$( pwd )
 		if [[ "${path_pre}" != "${path_now}" ]]; then
@@ -304,25 +256,48 @@ __fn_list_check_loop() {
 		fi
 	}
 	#
-	local git_info_start=$(_fn_git_info_start)
-	local git_info_end=$(_fn_git_info_end)
-	local sign=$( if [[ "$USER" != "root" ]]; then echo "${BLUE}\$ "; else echo "${RED}\# "; fi )
-	
-	local arrow_red="${RED}➜ [r] "
-	local arrow_green="${GREEN}➜ [r] "
-	local arrow=${arrow_green}
+	local arrow_red="${RED}➜ [r] " arrow_green="${GREEN}➜ [r] "
+	local arrow="${arrow_green}"
 	__arrow_auto_set() {
-		exitcode=$?
-		# echo "__arrow_auto_set -> exitcode: $exitcode"
-		if [[ $exitcode -gt 0 ]]; then 
-			arrow=${arrow_red}
-			# echo "arrow to red"
-		else 
-			arrow=${arrow_green}
-			# echo "arrow to green"
-		fi
+		local exitcode=$?
+		[[ $exitcode -gt 0 ]] && arrow=${arrow_red} || arrow=${arrow_green}
 	}
 	
+	_fn_git_exist() {
+		[[ -n "$( command -v git )" ]] && [[ -d "${RUNFILE_DIR}/.git" ]] && echo "yes"
+	}
+	# note: using function like command below will run every we call _git_exist, but this value is not change
+	# after we started, so, we call a function directly and save value to variable, later, just use this value
+	# local _git_exist=$( [[ -n "$( command -v git )" ]] && [[ -d "${RUNFILE_DIR}/.git" ]] && echo yes ) #"$(_fn_git_exist)"
+	local _git_exist="$(_fn_git_exist)"
+
+	_fn_git_info_start() {
+		[[ -n "${_git_exist}" ]] && echo "${BLUE}git:("
+	}
+	local git_info_start="$(_fn_git_info_start)"
+	# local git_info_start="${BLUE}$( [[ -n "${_git_exist}" ]] && echo 'git:(' )"
+
+	_fn_git_info_mid(){
+		[[ -n "${_git_exist}" ]] && echo "${RED}$( git rev-parse --abbrev-ref HEAD )"
+	}
+
+	_fn_git_info_end() {
+		[[ -n "${_git_exist}" ]] && echo "${BLUE}) "
+	}
+	local git_info_end="$(_fn_git_info_end)"
+
+	_fn_git_status() {
+		[[ -z "${_git_exist}" ]] && echo -n "" || echo "$( [[ -n "$(git status --porcelain --untracked-files=no --ignore-submodules=dirty | tail -n 1)" ]] && echo "${RED}✗ " || echo "${GREEN}✔ " )"
+	}
+
+	local sign=$( if [[ "$USER" != "root" ]]; then echo "${BLUE}\$ "; else echo "${RED}\# "; fi )
+	
+	# make a copy of Runfile
+	if [[ "${AUTO_RELOAD}" == "yes" ]]; then
+		rm -rf "${RUNFILE_FILE_BK}"
+		cp "${RUNFILE_FILE}" "${RUNFILE_FILE_BK}"
+	fi
+
 	while true ; do
 
 		# check if Runfile changed
@@ -332,16 +307,9 @@ __fn_list_check_loop() {
 		fi
 
 		__path_auto_format
-		# path_now=$( pwd )
-		# if [[ "${path_pre}" != "${path_now}" ]]; then
-		# 	path_pre="${path_now}"
-		# 	#
-		# 	path_for="$( echo "${path_now}" | sed -e s@$HOME@'~'@g )"
-		# 	path_for="${GREEN}$( basename ${path_for} ) "
-		# fi
 		
 		# -e for tab completion on dir or file name
-		read -e -p "${arrow}${path_for}${git_info_start}$( _fn_git_info_mid )${git_info_end}$(_fn_git_status)${sign}${COLOR_RESET}" cmd args
+		read -e -p "${arrow}${path_for}${git_info_start}$(_fn_git_info_mid)${git_info_end}$(_fn_git_status)${sign}${COLOR_RESET}" cmd args
 		
 
 		case $cmd in

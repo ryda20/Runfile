@@ -49,6 +49,106 @@ tt2() {
 	echo -e "[tt2]=$x => changed: $( [[ "$x" == "out" ]] && echo "no" || echo "yes" )"
 }
 
+fn() {
+	# declare - Set variable values and attributes
+	# 	NAME
+	# declare - Set variable values and attributes.
+	# SYNOPSIS
+	#
+	# declare [-aAfFgilnrtux] [-p] [name[=value] ...]
+	# DESCRIPTION
+	#
+	# Set variable values and attributes.
+	# Declare variables and give them attributes. If no NAMEs are given, display the attributes and values of all variables.
+	#
+	# Options:
+	#
+	# -f
+	# restrict action or display to function names and definitions
+	# -F
+	# restrict display to function names only (plus line number and source file when debugging)
+	# -g
+	# create global variables when used in a shell function; otherwise ignored
+	# -p
+	# display the attributes and value of each NAME
+	# Options which set attributes:
+	#
+	# -a
+	# to make NAMEs indexed arrays (if supported)
+	# -A
+	# to make NAMEs associative arrays (if supported)
+	# -i
+	# to make NAMEs have the ‘integer’ attribute
+	# -l
+	# to convert NAMEs to lower case on assignment
+	# -n
+	# make NAME a reference to the variable named by its value
+	# -r
+	# to make NAMEs readonly
+	# -t
+	# to make NAMEs have the ‘trace’ attribute
+	# -u
+	# to convert NAMEs to upper case on assignment
+	# -x
+	# to make NAMEs export
+	# Using ‘+’ instead of ‘-’ turns off the given attribute.
+	#
+	# Variables with the integer attribute have arithmetic evaluation (see the let command) performed when the variable is assigned a value.
+	#
+	# When used in a function, declare makes NAMEs local, as with the local command. The ‘-g’ option suppresses this behavior.
+	#
+	# Exit Status:
+	# Returns success unless an invalid option is supplied or a variable assignment error occurs.
 
+	declare a b c
+	a=foo
+	b=bar
+	c=baz
+
+	foo () {
+		echo "1. From within func:"
+		declare -p a
+		declare -p b
+		declare -p c
+
+
+		local a=1 b=2 c=3
+
+		echo "2. From within func:"
+		declare -p a
+		declare -p b
+		declare -p c
+	}
+
+	foo
+
+	echo "From outside func:"
+	declare -p a
+	declare -p b
+	declare -p c
+}
+
+fn2() {
+	declare -i a -a b c
+	a=foo
+	b=(bar)
+	c=baz
+
+	foo () {
+		local -i a=1 -a b=(2) c=3
+
+		echo "From within func:"
+		declare -p a
+		declare -p b
+		declare -p c
+	}
+
+	foo
+
+	echo "From outside func:"
+	declare -p a
+	declare -p b
+	declare -p c
+}
 ##endregion USER =================================================
 __start_app ${@} # MUST_END_OF_FILE
