@@ -244,21 +244,21 @@ _fn_git_info_start() {
 	if [[ -n "${_GIT_EXIST}" ]]; then 
 		gitstr="git:("
 	fi
-	echo "${gitstr}"
+	echo "${BLUE}${gitstr}"
 }
 _fn_git_info_mid(){
 	local gitstr=""
 	if [[ -n "${_GIT_EXIST}" ]]; then 
 		gitstr="$( git rev-parse --abbrev-ref HEAD )"
 	fi
-	echo "${gitstr}"
+	echo "${RED}${gitstr}"
 }
 _fn_git_info_end() {
 	local gitstr=""
 	if [[ -n "${_GIT_EXIST}" ]]; then 
 		gitstr=") "
 	fi
-	echo "${gitstr}"
+	echo "${BLUE}${gitstr}"
 }
 #STATUS=$(__git_prompt_git status ${FLAGS} 2> /dev/null | tail -n 1)
 _fn_git_status() {
@@ -266,9 +266,9 @@ _fn_git_status() {
 	if [[ -n "${_GIT_EXIST}" ]]; then 
 		status=$(git status --porcelain --untracked-files=no --ignore-submodules=dirty | tail -n 1)
 		if [[ -n "$status" ]]; then
-			gitstr=$'\e[31m'"✗ "
+			gitstr="${RED}✗ "
 		else
-			gitstr="✔ "
+			gitstr="${GREEN}✔ "
 		fi
 	fi
 	echo "${gitstr}"
@@ -297,8 +297,12 @@ __fn_list_check_loop() {
 	#
 	local git_info_start=$(_fn_git_info_start)
 	local git_info_end=$(_fn_git_info_end)
-	local sign=$( if [[ "$USER" != "root" ]]; then echo $'\e[32m'"\$ "; else echo $'\e[31m'"\# "; fi )
-
+	local sign=$( if [[ "$USER" != "root" ]]; then echo "${BLUE}\$ "; else echo "${RED}\# "; fi )
+	
+	local arrow="${GREEN}➜ [r] "
+	
+	
+	
 	while true ; do
 
 		# check if Runfile changed
@@ -315,7 +319,7 @@ __fn_list_check_loop() {
 		fi
 		
 		# -e for tab completion on dir or file name
-		read -e -p 	$'\e[32m➜ '"${path_for}"$'\e[34m'"${git_info_start}"$'\e[31m'"$( _fn_git_info_mid )"$'\e[34m'"${git_info_end}"$'\e[36m'"$(_fn_git_status)${sign}"$'\e[0m' cmd args
+		read -e -p "${arrow}${path_for}${git_info_start}$( _fn_git_info_mid )${git_info_end}$(_fn_git_status)${sign}${COLOR_RESET}" cmd args
 		
 
 		case $cmd in

@@ -14,3 +14,9 @@ RUNFILE_DIR="$(pwd)"
 RUNFILE_FILE="${RUNFILE_DIR}/Runfile"
 RUNFILE_FILE_BK="/tmp/RunfileBk"
 AUTO_RELOAD=${RF_AUTO_RELOAD:-"yes"}
+
+COLOR_RESET=$'\e[0m'
+RED=$'\e[31m'
+GREEN=$'\e[32m'
+YELLOW=$'\e[33m'
+BLUE=$'\e[34m'
