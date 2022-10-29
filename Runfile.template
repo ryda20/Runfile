@@ -245,14 +245,14 @@ __fn_list_check_loop() {
 	__fn_list=$(_fn_list_by "" "_")
 	
 	#
-	local path_for path_now path_pre
+	local path path_now path_pre
 	__path_auto_format(){
 		path_now=$( pwd )
 		if [[ "${path_pre}" != "${path_now}" ]]; then
 			path_pre="${path_now}"
 			#
-			path_for="$( echo "${path_now}" | sed -e s@$HOME@'~'@g )"
-			path_for="${GREEN}$( basename ${path_for} ) "
+			path="$( echo "${path_now}" | sed -e s@$HOME@'~'@g )"
+			path="${GREEN}$( basename ${path} ) "
 		fi
 	}
 	#
@@ -290,7 +290,7 @@ __fn_list_check_loop() {
 		[[ -z "${_git_exist}" ]] && echo -n "" || echo "$( [[ -n "$(git status --porcelain --untracked-files=no --ignore-submodules=dirty | tail -n 1)" ]] && echo "${RED}✗ " || echo "${GREEN}✔ " )"
 	}
 
-	local sign=$( if [[ "$USER" != "root" ]]; then echo "${BLUE}\$ "; else echo "${RED}\# "; fi )
+	local dollar_char=$( if [[ "$USER" != "root" ]]; then echo "${BLUE}\$ "; else echo "${RED}\# "; fi )
 	
 	# make a copy of Runfile
 	if [[ "${AUTO_RELOAD}" == "yes" ]]; then
@@ -309,7 +309,7 @@ __fn_list_check_loop() {
 		__path_auto_format
 		
 		# -e for tab completion on dir or file name
-		read -e -p "${arrow}${path_for}${git_info_start}$(_fn_git_info_mid)${git_info_end}$(_fn_git_status)${sign}${COLOR_RESET}" cmd args
+		read -e -p "${arrow}${path}${git_info_start}$( _fn_git_info_mid )${git_info_end}$( _fn_git_status )${dollar_char}${COLOR_RESET}" cmd args
 		
 
 		case $cmd in
