@@ -281,8 +281,56 @@ __fn_list_check_loop() {
 			path="${RF_GREEN}$( basename ${path} ) "
 		fi
 	}
+	local path path_now path_pre
+	__path_auto_format(){
+		path_now=$( pwd )
+		if [[ "${path_pre}" != "${path_now}" ]]; then
+			path_pre="${path_now}"
+			#
+			path="$( echo "${path_now}" | sed -e "s@$HOME@~@g" )"
+			path="${RF_GREEN}$( basename ${path} ) "
+		fi
+	}
 	#
-	local arrow_red="${RF_RED}➜ [r] " arrow_green="${RF_GREEN}➜ [r] "
+	_fn_short_dir() { 
+		local path=${1:-""}
+		local replace_home_path=${2:-"yes"}
+		local keep=${3:-1}
+		
+		if [[ -z "${path}" ]]; then return; fi
+
+		if [[ "${replace_home_path}" == "yes" ]]; then
+			path=$( echo "${path}" | sed "s@$HOME@~@g" )
+		fi   
+		dir=${path%/*} # remove /* at the end of $1 - like dirname function do
+		last=${path##*/} # remove */ at the first of $1 - like basename function do
+
+		# ${dir//\// } => # replace / with " " -> //find_string/replace_string
+		# ${dir} | sed "s|/| |g" => # replace / witt " "
+		res=$(
+			for i in ${dir//\// } ; do
+				# echo out $keep chars from first one and dont make newline (-n)
+				echo -n "${i:0:${keep}}/";
+			done
+		)                                                                                                                                                                                                            
+		echo "$res$last"                                                                                                                                                                                                                                                         
+	} 
+	#
+	_fn_rf_dir() {
+		# h: stand for home working directory
+		if [[ "$( pwd )" == "${RF_WORKING_DIR}" ]]; then
+			echo "h"
+		elif [[ -n "$( _fn_in_working_dir )" ]]; then
+			echo $( pwd ) | sed "s|^${RF_WORKING_DIR}|h|"
+		else
+			p=$( echo "${RF_WORKING_DIR}" | sed "s@$HOME@~@g" )
+			p=$( _fn_short_dir "${p}" )
+			echo "${p}"
+		fi
+	}
+	#
+	#
+	local arrow_red="${RF_RED}➜ [$( _fn_rf_dir )] " arrow_green="${RF_GREEN}➜ [$( _fn_rf_dir )] "
 	local arrow="${arrow_green}"
 	__arrow_auto_set() {
 		local exitcode=$?
