@@ -308,8 +308,16 @@ __fn_list_check_loop() {
 
 		__path_auto_format
 		
-		# -e for tab completion on dir or file name
-		read -e -p "${arrow}${path}${git_info_start}$( _fn_git_info_mid )${git_info_end}$( _fn_git_status )${dollar_char}${COLOR_RESET}" cmd args
+		# -e for tab completion on dir or file name => it make error below
+		# got error: Terminal prompt not wrapping correctly
+		# read -p "${BRIGHT}${arrow}${path}$( _fn_git_info_start )$( _fn_git_info_mid )$( _fn_git_info_end )$( _fn_git_status )${final_sign}${NORMAL} " cmd args
+		#
+		# below have small error like above but happend in the second line
+		# echo -en "${BRIGHT}${arrow}${path}$( _fn_git_info_start )$( _fn_git_info_mid )$( _fn_git_info_end )$( _fn_git_status )${final_sign}${NORMAL}"
+		# read -e -p " " cmd args
+		#
+		# below is work ok
+		read -p "${BRIGHT}${arrow}${path}$( _fn_git_info_start )$( _fn_git_info_mid )$( _fn_git_info_end )$( _fn_git_status )${final_sign}${NORMAL} " cmd args
 		
 
 		case $cmd in
