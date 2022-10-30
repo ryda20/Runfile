@@ -2,9 +2,6 @@
 source ${RF_DIR:-~/.Runfile}/Runfile.template # MUST_START_OF_FILE
 ##regison USER ===================================================
 
-dddd() {
-	echo "xxx"
-}
 fn_list_by() {
 	# include_fn is a list of "start_with" string need to be keep in return list
 	# if include_fn is empty: mean include all
@@ -98,10 +95,6 @@ abc() {
 	local x
 	x1=${1:-${x:-100}}
 	echo "x1: $x1"
-}
-
-abc2() {
-	echo "abc2 task"
 }
 
 exitcode() {
