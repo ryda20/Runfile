@@ -2,100 +2,46 @@
 source ${RF_DIR:-~/.Runfile}/Runfile.template # MUST_START_OF_FILE
 ##regison USER ===================================================
 
-fn_list_by() {
-	# include_fn is a list of "start_with" string need to be keep in return list
-	# if include_fn is empty: mean include all
-	# Ex: "keep_me rf_"
-	local include_fn=${1:-""} # priority 1
-	# exclude_fn is a list of "start_with" string need to be exclude in return list
-	# if exclude_fn is empty: mean does not exclude
-	# Ex: "_ rf_"
-	local exclude_fn=${2:-""} # priority 2
-	
-	# declare -F return all function name with format: 
-	#	declare -F fname1
-	#	declare -F fname2
-	#	.......
-	#	declare -F fnameN
-	local _rf_fn_list=$(echo $(declare -F) | sed 's/declare -f //g')
-	local str=""
-	local repos_dir=${RF_REPOS_DIR:-"~/.Runfile"}
-	local fname aliasfile description
-	#
-	# echo "${include_fn}"
-	for f in ${_rf_fn_list}; do
-		# check include list
-		if [[ -n "${include_fn}" ]]; then
-			# IFS=$' ' # make sure IFS = space
-			for i in ${include_fn}; do
-				# echo "include value: ${i}"
-				# echo "included: $f -> "$( _fn_str_prefix "$f" "alias_" )""
-					
-				if [[ "${f:0:${#i}}" == "${i}" ]]; then
-					####
-					if [[ "$( _fn_str_prefix "$f" "alias_" )" == "yes" ]]; then
-						fname="${f}"
-						# get descriptition.  how?
-						# find a alias file in plugins dir and echo it path to cat out content,
-						# then send to sed and find the matching, remove the matching part,
-						# then print out (by -n and p) the description
-						aliasfile=$( find ${repos_dir}/plugins -type f -name 'alias_*_1' -exec echo {} \; )
-						description="$( cat ${aliasfile} | sed -n "s|^#${fname}: ||p" )"
-						if [[ -n ${description} ]]; then
-							fname="$( echo ${fname} | sed 's|alias_||' ) (${description})"
-						else
-							fname="$( echo ${fname} | sed 's|alias_||' )"
-						fi
-						description=""
-						# echo "-> full fname: $fname"
-						f="${fname}"
-					fi
-					#####
-					str="${str}${f}"$'\n'
-					continue 2 # skip this for and continue on parent for loop
-				fi
-			done
-			continue
-		fi
-		# check exclude list
-		if [[ -n "${exclude_fn}" ]]; then
-			for e in ${exclude_fn}; do
-				# get the first value in f with len of exclude and then compare to exclude value, skip if it same
-				# ex: exclude = "tf_" 		-> len = 3
-				#	  f = "tf_log_title"	-> ${f:0:len} = tf_
-				if [[ "${f:0:${#e}}" == "${e}" ]]; then continue 2; fi
-			done
-		fi
-		
-		# normally case
-		str="${str}${f}"$'\n'
-	done
-	# return string
-	echo "${str}"
+rf_ex1() {
+	rf_log_prefix="build"
+	rf_log_title "Example" "
+Description:
+	Description about build function run build arg1 arg2 arg3
+Params:
+	\$1: param 1 detail
+		2tab
+			3tab
+				4tab
+	\$2: param 2 detail
+	\$3: param 3 detail
+Note:
+	Some note about this fn
+"
 }
-fn() {
-	local str=$( fn_list_by "alias_ rf_" "" )
-	
-	
 
-	local saveIFS="$IFS"
-	IFS=$'\n'
-	local arr=( ${str} )
-	local idx=0
-	echo "len: ${#arr}"
-	for line in ${str}; do
-		echo "${idx} - line: ${line}"
-		idx=$((idx+1))
-	done
-	IFS="$saveIFS"
-	
+
+rf_ex2() {
+	local cmd=${1}; shift
+	local args=${@}
+	# rf_log "cmd: ${cmd}, args: ${args}"
+	case ${cmd} in
+	gen)
+		_rf_ex2_gen ${args}
+		;;
+	clear | clean)
+		_rf_ex2_clean ${args}
+		;;
+	*)
+		rf_log_title "available cmd(s)" "
+	rf_ex2 gen [, go_out_dir = pb [, js_out_dir = pb [, proto_dir = .]]]
+		=> generate go/js/ts files from .proto files.
+	rf_ex2 clear|clean [, go_dir = pb [, js_dir = pb]]
+		=> rm all .go, .js, .ts files from input directories
+		"
+		;;
+	esac
 }
-abc() {
-	echo "Abc task"
-	local x
-	x1=${1:-${x:-100}}
-	echo "x1: $x1"
-}
+
 
 exitcode() {
 	echo "this task will failed"

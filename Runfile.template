@@ -9,9 +9,11 @@ for f in ${RF_REPOS_DIR}/plugins/*_1; do
 	source "${f}"
 done
 
+# _fn_get_alias_files return list of all alias_*_1
 _fn_get_alias_files(){
 	echo "$( find ${repos_dir}/plugins -type f -name 'alias_*_1' -exec echo {} \; )"
 }
+
 ALIAS_FILE_LIST="$(_fn_get_alias_files)"
 
 # _fn_list_by return a string "func1 SEP func2 SEP func3 ...." with condition input
@@ -48,7 +50,7 @@ _fn_list_by() {
 						# then send to sed and find the matching, remove the matching part,
 						# then print out (by -n and p) the description
 						if [[ -z "${ALIAS_FILE_LIST}" ]]; then ALIAS_FILE_LIST="$(_fn_get_alias_files)"; fi
-						description="$( cat ${ALIAS_FILE_LIST} | sed -n "s|^#${f}: ||p" )" # p: print
+						description="$( cat ${ALIAS_FILE_LIST} | sed -n "s|^#${f}: ||p" )"
 						if [[ -n ${description} ]]; then
 							f="$( echo ${f} | sed 's|alias_||' ) (${description})"
 						else
