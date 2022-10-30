@@ -15,9 +15,47 @@ RUNFILE_FILE="${RUNFILE_DIR}/Runfile"
 RUNFILE_FILE_BK="/tmp/RunfileBk"
 AUTO_RELOAD=${RF_AUTO_RELOAD:-"yes"}
 
-#01; - text bold
-COLOR_RESET=$'\e[01;0m'
-RED=$'\e[01;31m'
-GREEN=$'\e[01;32m'
-YELLOW=$'\e[01;33m'
-BLUE=$'\e[01;34m'
+
+# tput Color Capabilities:
+#
+# tput setab [1-7] – Set a background color using ANSI escape
+# tput setb [1-7] – Set a background color
+# tput setaf [1-7] – Set a foreground color using ANSI escape
+# tput setf [1-7] – Set a foreground color
+# tput Text Mode Capabilities:
+#
+# tput bold – Set bold mode
+# tput dim – turn on half-bright mode
+# tput smul – begin underline mode
+# tput rmul – exit underline mode
+# tput rev – Turn on reverse mode
+# tput smso – Enter standout mode (bold on rxvt)
+# tput rmso – Exit standout mode
+# tput sgr0 – Turn off all attributes
+# Color Code for tput:
+#
+# 0 – Black
+# 1 – Red
+# 2 – Green
+# 3 – Yellow
+# 4 – Blue
+# 5 – Magenta
+# 6 – Cyan
+# 7 – White
+
+#\001 -> \[, \002 -> \], i don't use \[ ... \] because it does not work, don't know why
+RF_NORMAL=$'\001'"$(tput sgr0)"$'\002'
+RF_BLACK=$'\001'"$(tput setaf 0)"$'\002'
+RF_RED=$'\001'"$(tput setaf 1)"$'\002'
+RF_GREEN=$'\001'"$(tput setaf 2)"$'\002'
+RF_YELLOW=$'\001'"$(tput setaf 3)"$'\002'
+RF_LIME_YELLOW=$'\001'"$(tput setaf 190)"$'\002'
+RF_POWDER_BLUE=$'\001'"$(tput setaf 153)"$'\002'
+RF_BLUE=$'\001'"$(tput setaf 4)"$'\002'
+RF_MAGENTA=$'\001'"$(tput setaf 5)"$'\002'
+RF_CYAN=$'\001'"$(tput setaf 6)"$'\002'
+RF_WHITE=$'\001'"$(tput setaf 7)"$'\002'
+RF_BRIGHT=$'\001'"$(tput bold)"$'\002'
+RF_BLINK=$'\001'"$(tput blink)"$'\002'
+RF_REVERSE=$'\001'"$(tput smso)"$'\002'
+RF_UNDERLINE=$'\001'"$(tput smul)"$'\002'
