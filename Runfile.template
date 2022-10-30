@@ -11,6 +11,7 @@ done
 
 # _fn_get_alias_files return list of all alias_*_1
 _fn_get_alias_files(){
+	local repos_dir=${RF_REPOS_DIR:-"~/.Runfile"}
 	echo "$( find ${repos_dir}/plugins -type f -name 'alias_*_1' -exec echo {} \; )"
 }
 
@@ -86,7 +87,6 @@ _fn_list() {
 	local include_fn=${1:-""}
 	local exclude_fn=${2:-""}
 	local title=${3:-"all fn(s)"}
-	local alias=${4:-""}
 	#
 	local columns=${RF_COLUMN_NUMB:-3}
 	local line_width=${RF_LINE_WIDTH:-100}
@@ -117,15 +117,13 @@ _fn_list() {
 		for (( j=0; j < columns; j++ )); do
 			idx=$(( i + j ))
 			if (( ${idx} < ${arr_len} )); then
-				fname=${arr[idx]}
-				rowX="${rowX}$( printf "%2d) %-${padding}s" $(( idx + 1 )) "${fname}" )"
+				rowX="${rowX}$( printf "%2d) %-${padding}s" $(( idx + 1 )) "${arr[idx]}" )"
 			else
-				#  last rowX, keep padding 
-				rowX="${rowX}$( printf "    %-${padding}s" " " )"
+				rowX="${rowX}$( printf "    %-${padding}s" " " )" #  last rowX, keep padding 
 			fi
 		done
 		rowX="${rowX}${SEP}"
-		if (( rowLen < ${#rowX} )); then rowLen=$(( ${#rowX} )); fi
+		[[ ${rowLen} -lt ${#rowX} ]] && rowLen=$(( ${#rowX} ))
 		fnList="${fnList}${rowX}"
 	done
 	fnList="${fnList%${SEP}}" # remove 2 chars at end of string out '\n', or using: ${out%??}
@@ -147,7 +145,7 @@ run help rf
 
 	if [[ "${cmd}" == "alias" ]]; then
 		# show alias
-		_fn_list "alias_${alias_filter}" "" "alias fn(s)" "alias"
+		_fn_list "alias_${alias_filter}" "" "alias fn(s)"
 		return
 	fi
 	if [[ "${cmd}" == "rf" ]]; then
@@ -158,10 +156,9 @@ run help rf
 	local mode=${RF_MODE:-"loop"}
 	# else, show all
 	if [[ "${mode}" == "loop" ]]; then _fn_exit_msg; fi
-	# rf_log_title "Usage" "${str}"
-	#
+
 	_fn_list "rf_" "" "runfile fn(s)"
-	_fn_list "alias_" "" "alias fn(s)" "alias"
+	_fn_list "alias_" "" "alias fn(s)"
 	_fn_list "" "_ rf_ alias_" "user fn(s)"
 }
 
@@ -204,14 +201,12 @@ _fn_exit_msg() {
 	rf_log_title "cmd(s)" "${msg}"
 }
 
+
 _fn_reload() {
 	clear
 	cd $RF_WORKING_DIR
 	exec bash -c "${RF_WORKING_DIR}/Runfile"
 }
-
-
-
 
 # __fn_list_check_loop will check input command and validation before execute
 # run with command: `run`, then user can call task by type `task_name args`
@@ -229,9 +224,10 @@ __fn_list_check_loop() {
 		path_now=$( pwd )
 		if [[ "${path_pre}" != "${path_now}" ]]; then
 			path_pre="${path_now}"
-			#
+			path=${path_now}
 			path="$( echo "${path_now}" | sed -e "s@$HOME@~@g" )"
 			path="${RF_GREEN}$( basename ${path} ) "
+			# path="${RF_GREEN}$( _fn_short_dir "${path}" ) "
 		fi
 	}
 	
@@ -243,9 +239,12 @@ __fn_list_check_loop() {
 		
 		if [[ -z "${path}" ]]; then return; fi
 
+		# [[ "${path}" == "$HOME" ]] && echo "~"; return
+		 
 		if [[ "${replace_home_path}" == "yes" ]]; then
 			path=$( echo "${path}" | sed "s@$HOME@~@g" )
-		fi   
+		fi
+		
 		dir=${path%/*} # remove /* at the end of $1 - like dirname function do
 		last=${path##*/} # remove */ at the first of $1 - like basename function do
 
@@ -315,7 +314,7 @@ __fn_list_check_loop() {
 
 	local final_sign=$( if [[ "$USER" != "root" ]]; then echo "${RF_BLUE}\$"; else echo "${RF_RED}\#"; fi )
 	
-	# make a copy of Runfile
+	
 	local runfilebk="/tmp/RunfileBk"
 	local autoreload=${RF_AUTO_RELOAD:-"yes"}
 	if [[ "${autoreload}" == "yes" ]]; then
@@ -327,11 +326,11 @@ __fn_list_check_loop() {
 
 		# check if Runfile changed
 		if [[ "${autoreload}" == "yes" ]] && [[ "${RF_WORKING_DIR}/Runfile" -nt "$runfilebk" ]]; then
-			#echo "Runfile was changed"
 			_fn_reload
 		fi
 
 		__path_auto_format
+
 		# -e for tab completion on dir or file name => it make error below
 		# got error: Terminal prompt not wrapping correctly
 		# read -p "${BRIGHT}${arrow}${path}$( _fn_git_info_start )$( _fn_git_info_mid )$( _fn_git_info_end )$( _fn_git_status )${final_sign}${NORMAL} " cmd args
@@ -350,9 +349,7 @@ __fn_list_check_loop() {
 				rf_update "local"
 				_fn_reload
 				;;
-			h) 
-				cd $RF_WORKING_DIR
-				;;
+			h) cd $RF_WORKING_DIR;;
 			*)
 				# if no input: ${#cmd} -eq 0. Nothing to check 
 				# -> show user functions only
