@@ -1,34 +1,18 @@
 #!/bin/bash
 
 ## Variables ##
-NC='\033[0m' # No Color
-Black='\033[0;30m'
-DarkGray='\033[1;30m'
-Red='\033[0;31m'
-LightRed='\033[1;31m'
-Green='\033[0;32m'
-LightGreen='\033[1;32m'
-BrownOrange='\033[0;33m'
-Yellow='\033[1;33m'
-Blue='\033[0;34m'
-LightBlue='\033[1;34m'
-Purple='\033[0;35m'
-LightPurple='\033[1;35m'
-Cyan='\033[0;36m'
-LightCyan='\033[1;36m'
-LightGray='\033[0;37m'
-White='\033[1;37m'
+NC=$'\001'"$(tput sgr0)"$'\002'
 
-colors[0]=${RF_BLACK:-$'\001'"$(tput setaf 0)"$'\002'}
-colors[1]=${RF_GREEN:-$'\001'"$(tput setaf 2)"$'\002'}
-colors[2]=${RF_YELLOW:-$'\001'"$(tput setaf 3)"$'\002'}
-colors[3]=${RF_LIME_YELLOW:-$'\001'"$(tput setaf 190)"$'\002'}
-colors[4]=${RF_POWDER_BLUE:-$'\001'"$(tput setaf 153)"$'\002'}
-colors[5]=${RF_BLUE:-$'\001'"$(tput setaf 4)"$'\002'}
-colors[6]=${RF_MAGENTA:-$'\001'"$(tput setaf 5)"$'\002'}
-colors[7]=${RF_CYAN:-$'\001'"$(tput setaf 6)"$'\002'}
-# colors[8]=${RF_RED:-$'\001'"$(tput setaf 1)"$'\002'}
-# colors[9]=${RF_WHITE:-$'\001'"$(tput setaf 7)"$'\002'}
+colors[0]=$'\001'"$(tput setaf 0)"$'\002'
+colors[1]=$'\001'"$(tput setaf 2)"$'\002'
+colors[2]=$'\001'"$(tput setaf 3)"$'\002'
+colors[3]=$'\001'"$(tput setaf 190)"$'\002'
+colors[4]=$'\001'"$(tput setaf 153)"$'\002'
+colors[5]=$'\001'"$(tput setaf 4)"$'\002'
+colors[6]=$'\001'"$(tput setaf 5)"$'\002'
+colors[7]=$'\001'"$(tput setaf 6)"$'\002'
+# colors[8]=$'\001'"$(tput setaf 1)"$'\002'
+# colors[9]=$'\001'"$(tput setaf 7)"$'\002'
 
 colors_size=${#colors[@]}
 colors_index=0
@@ -63,66 +47,19 @@ rf_log_title() {
 
 	_log_prefix_init
 
-	# echo "line_width: ${line_width}"
+	echo "line_width: ${line_width}"
 	# print out - start - seperated line
 	rf_log_header "${title}" ${line_width}
 	
 	local saveIFS="$IFS"
 	IFS=$ifs
 	for line in ${content}; do
-		# echo "line: $line"
-		printf "${random_color}# %-$(( line_width - 6 ))s#${NC}\n" "$line"
+		# replace tab with 4 spaces, adding "# " on front of line
+		line="# $( echo "${line}" | sed "s/\t/    /g" )"
+		printf "${random_color}%-$(( line_width +1 ))s#${NC}\n" "$line" # +1 because we add # at end of line
 	done
 	_repeat ${line_width} "=" "${random_color}#" "#${NC}"
 	IFS="$saveIFS"
-}
-
-rf_log_title_bk() {
-	local title=${1:-}
-	local content=${2:-""}
-	local format=${3:-"yes"}
-	local line_width=${4:-${RF_LINE_WIDTH:-100}}
-
-	local padding=" "
-	local tab_len=${RF_TAG_WIDTH:-8}
-	local line_1tab=$(( line_width - tab_len ))
-	local line_2tab=$(( line_1tab - tab_len ))
-	local line_3tab=$(( line_2tab - tab_len ))
-	local line_4tab=$(( line_3tab - tab_len ))
-
-	_log_prefix_init
-	# print out - start - seperated line
-	rf_log_header "${title}" ${line_width}
-
-	# print out contents
-	# Support to 4 tabs space for now
-	# 0. delete empty line first and empty line have tab(s)
-	# 1. matching 4tabs and padding 48 characters
-	# 2. matching 3tabs (except 4tabs) and padding 56 chars
-	# 3. matching 2tabs (except 3tabs) and padding 64 chars
-	# 4. matching 1tab  (except 2tabs) and padding 72 chars
-	# 5. matching any   (except 1tab)  and padding 80 chars
-	#	actually 78 because we add more 2 char '# ',
-	#	all above not change because add more 2 chars does not effect to tab
-	# 6. matching any and append "#" at the start and end
-	if [[ "${format}" == "yes" ]]; then
-		content=$(
-			sed -e :a \
-				-e "/^[[:blank:]]*$/d" \
-				-e "			s/^\t\{4\}.\{1,${line_4tab}\}$/&${padding}/;ta" \
-				-e "/^\t\{4\}/! s/^\t\{3\}.\{1,${line_3tab}\}$/&${padding}/;ta" \
-				-e "/^\t\{3\}/! s/^\t\{2\}.\{1,${line_2tab}\}$/&${padding}/;ta" \
-				-e "/^\t\{2\}/! s/^\t.\{1,${line_1tab}\}$/&${padding}/;ta" \
-				-e "/^\t\{1\}/! s/^.\{1,$(( line_width - 2 ))\}$/&${padding}/;ta" \
-				-e "s/^.*$/# &#/g" <<< "${content}"
-		)
-	fi
-	echo -e "${random_color}${content}${NC}"
-
-	# print out - end - seperated line
-	_repeat ${line_width} "=" "${random_color}#" "#${NC}"
-	# make new empty line
-	echo
 }
 
 _log_prefix_init() {

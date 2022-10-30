@@ -246,11 +246,12 @@ __fn_list_check_normal () {
 }
 
 _fn_exit_msg() {
-	rf_log_title "cmd(s)" "
+	local msg="
 	q: quit
 	r: reload session
 	h: go working dir
 "
+	rf_log_title "cmd(s)" "${msg}"
 }
 
 _fn_reload() {
