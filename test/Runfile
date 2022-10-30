@@ -237,5 +237,10 @@ fn2() {
 	declare -p b
 	declare -p c
 }
+
+test() {
+	list="$( find ~/.Runfile/plugins -type f -name 'alias_*_1' -exec echo "{}" \; )"
+	cat $list
+}
 ##endregion USER =================================================
 __start_app ${@} # MUST_END_OF_FILE

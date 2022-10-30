@@ -1,5 +1,5 @@
 #!/bin/bash
-source ${RF_REPOS_DIR:-~/.Runfile}/Runfile.template # MUST_START_OF_FILE
+source "${RF_REPOS_DIR:-~/.Runfile}/Runfile.template" # MUST_START_OF_FILE
 ##regison USER ===================================================
 
 

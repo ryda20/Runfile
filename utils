@@ -27,20 +27,6 @@ rf_update() {
 	fi
 }
 
-rf_str_to_arr() {
-	local str=${1}
-	local sep=${2:-$' '}
-	# x=$'Some\nstring'
-	# readarray -t y <<<"$x"
-	# Or, if you don't have bash 4, the bash 3.2 equivalent:
-	# IFS=$'\n' read -rd '' -a y <<<"$x"
-	# You can also do it the way you were initially trying to use:
-	# y=(${x//$'\n'/ })
-	IFS=$sep
-	read -rd '' -a y <<< "${str}"
-	
-}
-
 # rf_copy_ex2 copy rf_ex2 to user Runfile
 # wip - not completed
 _rf_copy_ex2() {

@@ -1,20 +1,24 @@
 #!/bin/bash -i
 RF_REPOS_DIR=${RF_REPOS_DIR:-~/.Runfile} # get RF_REPOS_DIR from ENV or using default value
-source ${RF_REPOS_DIR}/vars
-source ${RF_REPOS_DIR}/utils
+source "${RF_REPOS_DIR}/vars"
+source "${RF_REPOS_DIR}/utils"
 
 # only include file end with _1 (enable), _0 (disable)
 for f in ${RF_REPOS_DIR}/plugins/*_1; do
 	# echo "loading: $f"
-	source ${f}
+	source "${f}"
 done
 
+_fn_get_alias_files(){
+	echo "$( find ${repos_dir}/plugins -type f -name 'alias_*_1' -exec echo {} \; )"
+}
+ALIAS_FILE_LIST="$(_fn_get_alias_files)"
 
-# _fn_list_by return a string "func1 func2 func3 ...." with condition input
+# _fn_list_by return a string "func1 SEP func2 SEP func3 ...." with condition input
 _fn_list_by() {
 	# include_fn is a list of "start_with" string need to be keep in return list
 	# if include_fn is empty: mean include all
-	# Ex: "keep_me rf_" - seperated by space
+	# Ex: "keep_me rf_" -> seperated by space
 	local include_fn=${1:-""} # priority 1
 	# exclude_fn is a list of "start_with" string need to be exclude in return list
 	# if exclude_fn is empty: mean does not exclude
@@ -43,8 +47,8 @@ _fn_list_by() {
 						# find a alias file in plugins dir and echo it path to cat out content,
 						# then send to sed and find the matching, remove the matching part,
 						# then print out (by -n and p) the description
-						aliasfile=$( find ${repos_dir}/plugins -type f -name 'alias_*_1' -exec echo {} \; )
-						description="$( cat ${aliasfile} | sed -n "s|^#${f}: ||p" )"
+						if [[ -z "${ALIAS_FILE_LIST}" ]]; then ALIAS_FILE_LIST="$(_fn_get_alias_files)"; fi
+						description="$( cat ${ALIAS_FILE_LIST} | sed -n "s|^#${f}: ||p" )" # p: print
 						if [[ -n ${description} ]]; then
 							f="$( echo ${f} | sed 's|alias_||' ) (${description})"
 						else
@@ -228,6 +232,7 @@ __fn_list_check_loop() {
 			path="${RF_GREEN}$( basename ${path} ) "
 		fi
 	}
+	
 	#
 	_fn_short_dir() { 
 		local path=${1:-""}
@@ -324,7 +329,7 @@ __fn_list_check_loop() {
 			_fn_reload
 		fi
 
-		
+		__path_auto_format
 		# -e for tab completion on dir or file name => it make error below
 		# got error: Terminal prompt not wrapping correctly
 		# read -p "${BRIGHT}${arrow}${path}$( _fn_git_info_start )$( _fn_git_info_mid )$( _fn_git_info_end )$( _fn_git_status )${final_sign}${NORMAL} " cmd args
@@ -336,12 +341,11 @@ __fn_list_check_loop() {
 		# below is work ok
 		read -e -p "${RF_BRIGHT}${arrow}${path}$( _fn_git_info_start )$( _fn_git_info_mid )$( _fn_git_info_end )$( _fn_git_status )${final_sign}${RF_NORMAL} " cmd args
 		
-
 		case $cmd in
 			q) exit 0;;
 			r) _fn_reload;;
-			rr) 
-				rf_update "local" "/Users/ddnm/gitlab/ryda20/Runfile"
+			rr)
+				rf_update "local"
 				_fn_reload
 				;;
 			h) 
