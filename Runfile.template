@@ -249,12 +249,14 @@ _fn_exit_msg() {
 	rf_log_title "cmd(s)" "
 	q: quit
 	r: reload session
-	h: help
+	h: go working dir
 "
 }
 
 _fn_reload() {
-	clear && exec bash -c "${RF_WORKING_DIR}/Runfile"
+	clear
+	cd $RF_WORKING_DIR
+	exec bash -c "${RF_WORKING_DIR}/Runfile"
 }
 
 
@@ -318,18 +320,22 @@ __fn_list_check_loop() {
 		elif [[ -n "$( _fn_in_working_dir )" ]]; then
 			echo $( pwd ) | sed "s|^${RF_WORKING_DIR}|h|"
 		else
-			p=$( echo "${RF_WORKING_DIR}" | sed "s@$HOME@~@g" )
+			local p=$( echo "${RF_WORKING_DIR}" | sed "s@$HOME@~@g" )
 			p=$( _fn_short_dir "${p}" )
 			echo "${p}"
 		fi
 	}
 	#
-	#
-	local arrow_red="${RF_RED}➜ [$( _fn_rf_dir )] " arrow_green="${RF_GREEN}➜ [$( _fn_rf_dir )] "
-	local arrow="${arrow_green}"
+	
+	_fn_arrow_red() {
+		echo "${RF_RED}➜ [$( _fn_rf_dir )] "
+	}
+	_fn_arrow_green() {
+		echo "${RF_GREEN}➜ [$( _fn_rf_dir )] "
+	}
+	local arrow="$( _fn_arrow_green )"
 	__arrow_auto_set() {
-		local exitcode=$?
-		[[ $exitcode -gt 0 ]] && arrow=${arrow_red} || arrow=${arrow_green}
+		[[ $? -gt 0 ]] && arrow="$( _fn_arrow_red )" || arrow="$( _fn_arrow_green )"
 	}
 	#
 	_fn_git_dir_exist() {
@@ -384,13 +390,13 @@ __fn_list_check_loop() {
 		# read -e -p " " cmd args
 		#
 		# below is work ok
-		read -p "${RF_BRIGHT}${arrow}${path}$( _fn_git_info_start )$( _fn_git_info_mid )$( _fn_git_info_end )$( _fn_git_status )${final_sign}${RF_NORMAL} " cmd args
+		read -e -p "${RF_BRIGHT}${arrow}${path}$( _fn_git_info_start )$( _fn_git_info_mid )$( _fn_git_info_end )$( _fn_git_status )${final_sign}${RF_NORMAL} " cmd args
 		
 
 		case $cmd in
 			q) exit 0;;
 			r) _fn_reload;;
-			h) help;;
+			h) cd $RF_WORKING_DIR;;
 			*)
 				# if no input: ${#cmd} -eq 0. Nothing to check 
 				# -> show user functions only
