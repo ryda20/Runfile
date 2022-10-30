@@ -290,28 +290,25 @@ __fn_list_check_loop() {
 	}
 	
 	_fn_git_exist() {
-		[[ -n "${RF_GIT}" ]] && [[ -d "${RF_WORKING_DIR}/.git" ]] && echo "yes"
+		[[ -n "${RF_GIT}" ]] && [[ -d "$( pwd )/.git" ]] && echo "yes"
 	}
-	# note: using function like command below will run every we call _git_exist, but this value is not change
-	# after we started, so, we call a function directly and save value to variable, later, just use this value
-	local _git_exist="$(_fn_git_exist)"
 
 	_fn_git_info_start() {
-		[[ -n "${_git_exist}" ]] && echo "${RF_BLUE}git:("
+		[[ -n "$( _fn_git_exist )" ]] && echo "${RF_BLUE}git:("
 	}
 	local git_info_start="$(_fn_git_info_start)"
 
 	_fn_git_info_mid(){
-		[[ -n "${_git_exist}" ]] && echo "${RF_RED}$( git rev-parse --abbrev-ref HEAD )"
+		[[ -n "$( _fn_git_exist )" ]] && echo "${RF_RED}$( git rev-parse --abbrev-ref HEAD )"
 	}
 
 	_fn_git_info_end() {
-		[[ -n "${_git_exist}" ]] && echo "${RF_BLUE}) "
+		[[ -n "$( _fn_git_exist )" ]] && echo "${RF_BLUE}) "
 	}
 	local git_info_end="$(_fn_git_info_end)"
 
 	_fn_git_status() {
-		[[ -z "${_git_exist}" ]] && echo -n "" || echo "$( [[ -n "$(git status --porcelain --untracked-files=no --ignore-submodules=dirty | tail -n 1)" ]] && echo "${RF_RED}✗ " || echo "${RF_GREEN}✔ " )"
+		[[ -z "$( _fn_git_exist )" ]] && echo -n "" || echo "$( [[ -n "$(git status --porcelain --untracked-files=no --ignore-submodules=dirty | tail -n 1)" ]] && echo "${RF_RED}✗ " || echo "${RF_GREEN}✔ " )"
 	}
 
 	local dollar_char=$( if [[ "$USER" != "root" ]]; then echo "${RF_BLUE}\$"; else echo "${RF_RED}\#"; fi )
