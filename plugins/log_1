@@ -47,7 +47,7 @@ rf_log_title() {
 
 	_log_prefix_init
 
-	echo "line_width: ${line_width}"
+	# echo "line_width: ${line_width}"
 	# print out - start - seperated line
 	rf_log_header "${title}" ${line_width}
 	

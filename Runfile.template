@@ -14,13 +14,14 @@ done
 _fn_list_by() {
 	# include_fn is a list of "start_with" string need to be keep in return list
 	# if include_fn is empty: mean include all
-	# Ex: "keep_me rf_"
+	# Ex: "keep_me rf_" - seperated by space
 	local include_fn=${1:-""} # priority 1
 	# exclude_fn is a list of "start_with" string need to be exclude in return list
 	# if exclude_fn is empty: mean does not exclude
-	# Ex: "_ rf_"
+	# Ex: "_ rf_" - seperated by space
 	local exclude_fn=${2:-""} # priority 2
 	
+	local SEP=${3:-$'\n'}
 
 	# declare -F return all function name with format: 
 	#	declare -F fname1
@@ -29,13 +30,29 @@ _fn_list_by() {
 	#	declare -F fnameN
 	local _rf_fn_list=$(echo $(declare -F) | sed 's/declare -f //g')
 	local str=""
+	local repos_dir=${RF_REPOS_DIR:-"~/.Runfile"}
+	local aliasfile description
 	#
 	for f in ${_rf_fn_list}; do
-		# check include list
 		if [[ -n "${include_fn}" ]]; then
 			for i in ${include_fn}; do
 				if [[ "${f:0:${#i}}" == "${i}" ]]; then
-					str="${str}${f} "
+					# find description for alias
+					if [[ "$( _fn_str_prefix "$f" "alias_" )" == "yes" ]]; then
+						# how?
+						# find a alias file in plugins dir and echo it path to cat out content,
+						# then send to sed and find the matching, remove the matching part,
+						# then print out (by -n and p) the description
+						aliasfile=$( find ${repos_dir}/plugins -type f -name 'alias_*_1' -exec echo {} \; )
+						description="$( cat ${aliasfile} | sed -n "s|^#${f}: ||p" )"
+						if [[ -n ${description} ]]; then
+							f="$( echo ${f} | sed 's|alias_||' ) (${description})"
+						else
+							f="$( echo ${f} | sed 's|alias_||' )"
+						fi
+						description=""
+					fi
+					str="${str}${f}"${SEP}
 					continue 2 # skip this for and continue on parent for loop
 				fi
 			done
@@ -52,9 +69,9 @@ _fn_list_by() {
 		fi
 		
 		# normally case
-		str="${str}${f} "
+		str="${str}${f}"${SEP}
 	done
-	# return by echo
+	# return string
 	echo "${str}"
 }
 
@@ -64,18 +81,25 @@ _fn_list() {
 	local exclude_fn=${2:-""}
 	local title=${3:-"all fn(s)"}
 	local alias=${4:-""}
-
-	# list functions formated by printf
-	local rowLen=0 rowX fname idx=0 fnList=""
-	local arr=($(_fn_list_by "${include_fn}" "${exclude_fn}")) # convert return string "x y z" to array by wrapped ()
-	local arr_len=${#arr[@]}
+	#
 	local columns=${RF_COLUMN_NUMB:-3}
 	local line_width=${RF_LINE_WIDTH:-100}
-	local description=""
-	local repos_dir=${RF_REPOS_DIR:-"~/.Runfile"}
-	# if [[ ${alias} == "alias" ]]; then columns=6; fi
 	local padding=$(( line_width / columns + 2 )) # plus 2 to always ceiling padding
-
+	local repos_dir=${RF_REPOS_DIR:-"~/.Runfile"}
+	#
+	#
+	local SEP=$'\n'
+	local str=$( _fn_list_by "${include_fn}" "${exclude_fn}" ${SEP} ) # return string with seperated is \n
+	# find len of array by seperated in str
+	local arr arr_len=0
+	local saveIFS="$IFS" && IFS="$SEP"
+	for line in ${str}; do 
+		arr[${arr_len}]="${line}"
+		arr_len=$(( arr_len+1 ))
+	done && IFS="$saveIFS"
+	# echo "len ${arr_len}"
+	
+	local rowLen=0 rowX fname idx=0 fnList="" description=""
 
 	if [[ ${arr_len} -eq 0 ]]; then
 		rf_log " not found any fn(s). Run: \`run help\` to see all defined fn(s)"
@@ -88,99 +112,19 @@ _fn_list() {
 			idx=$(( i + j ))
 			if (( ${idx} < ${arr_len} )); then
 				fname=${arr[idx]}
-				if [[ ${alias} == "alias" ]]; then
-					# get descriptition.  how?
-					# find a alias file in plugins dir and echo it path to cat out content,
-					# then send to sed and find the matching, remove the matching part,
-					# then print out (by -n and p) the description
-					aliasfile=$( find ${repos_dir}/plugins -type f -name 'alias_*_1' -exec echo {} \; )
-					description="$( cat ${aliasfile} | sed -n "s|^#${fname}: ||p" )"
-					if [[ -n ${description} ]]; then
-						fname="$( echo ${fname} | sed 's|alias_||' ) (${description})"
-					else
-						fname="$( echo ${fname} | sed 's|alias_||' )"
-					fi
-					description=""
-				fi
 				rowX="${rowX}$( printf "%2d) %-${padding}s" $(( idx + 1 )) "${fname}" )"
 			else
 				#  last rowX, keep padding 
 				rowX="${rowX}$( printf "    %-${padding}s" " " )"
 			fi
 		done
-		rowX="$rowX"$'\n'
+		rowX="${rowX}${SEP}"
 		if (( rowLen < ${#rowX} )); then rowLen=$(( ${#rowX} )); fi
 		fnList="${fnList}${rowX}"
 	done
-	fnList="${fnList%'\n'}" # remove 2 chars at end of string out '\n', or using: ${out%??}
+	fnList="${fnList%${SEP}}" # remove 2 chars at end of string out '\n', or using: ${out%??}
 	
 	rf_log_title "${title}" "${fnList}" ${rowLen}
-}
-
-_fn_list_bk() {
-	local include_fn=${1:-""}
-	local exclude_fn=${2:-""}
-	local title=${3:-"all fn(s)"}
-	local alias=${4:-""}
-
-	# list functions formated by printf
-	local rowLen=0
-	local rowX=0
-	local fnList=""
-	local str=$(_fn_list_by "${include_fn}" "${exclude_fn}")
-	local arr=(${str}) # convert string "x y z" to array
-	local arr_len=${#arr[@]}
-	local idx=0
-	local columns=${RF_COLUMN_NUMB:-3}
-	local line_width=${RF_LINE_WIDTH:-100}
-	local description=""
-	local repos_dir=${RF_REPOS_DIR:-"~/.Runfile"}
-	# if [[ ${alias} == "alias" ]]; then columns=6; fi
-	local padding=$(( line_width / columns - 4 )) # -4 because we added 4 char `%2d) ` and we don't want to increse line len more
-	
-	if [[ ${arr_len} -eq 0 ]]; then
-		rf_log " not found any fn(s). Run: \`run help\` to see all defined fn(s)"
-		return;
-	fi
-	
-	for (( i=0; i < arr_len; i+=columns)); do
-		local rowX="# " # `# ` 	-> + 2 chars
-		for (( j=0; j < columns; j++ )); do
-			idx=$(( i + j ))
-			if (( ${idx} < ${arr_len} )); then
-				fname=${arr[idx]}
-				if [[ ${alias} == "alias" ]]; then
-					# get descriptition.  how?
-					# find a alias file in plugins dir and echo it path to cat out content,
-					# then send to sed and find the matching, remove the matching part,
-					# then print out (by -n and p) the description
-					aliasfile=$( find ${repos_dir}/plugins -type f -name 'alias_*_1' -exec echo {} \; )
-					description="$( cat ${aliasfile} | sed -n "s|^#${fname}: ||p" )"
-					if [[ -n ${description} ]]; then
-						fname="$(echo ${fname} | sed 's|alias_||' ) (${description})"
-					else
-						fname="$(echo ${fname} | sed 's|alias_||' )"
-					fi
-					description=""
-				fi
-				# `%2d )` -> + 4 chars
-				rowX="${rowX}$( printf "%2d) %-${padding}s" $(( idx + 1 )) "${fname}" )"
-			else
-				# still keep space for "x) " - 4 spaces for formating correctly
-				rowX="${rowX}$( printf "    %-${padding}s" "" )"
-			fi
-		done
-		rowX="$rowX#\n" # `\n`	-> + 2 chars
-		# set row len to send to rf_log_xxx
-		# - 4 because we add 4 chars and we want to keep line width
-		# and set only one time because rows len is equal
-		# and must to subtract because some of chars does not display, so, the display will not true (\n)
-		if (( rowLen < ${#rowX} )); then rowLen=$(( ${#rowX} - 4 )); fi
-		fnList="${fnList}${rowX}"
-	done
-	fnList="${fnList%'\n'}" # remove 2 chars at end of string out '\n', or using: ${out%??}
-	
-	rf_log_title "${title}" "${fnList}" "no" ${rowLen}
 }
 
 help() {
@@ -397,6 +341,7 @@ __fn_list_check_loop() {
 		case $cmd in
 			q) exit 0;;
 			r) _fn_reload;;
+			rr) rf_update "local" "/Users/ddnm/gitlab/ryda20/Runfile" && _fn_reload ;;
 			h) cd $RF_WORKING_DIR;;
 			*)
 				# if no input: ${#cmd} -eq 0. Nothing to check 
