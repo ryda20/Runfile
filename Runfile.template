@@ -324,7 +324,6 @@ __fn_list_check_loop() {
 			_fn_reload
 		fi
 
-		__path_auto_format
 		
 		# -e for tab completion on dir or file name => it make error below
 		# got error: Terminal prompt not wrapping correctly
@@ -341,8 +340,13 @@ __fn_list_check_loop() {
 		case $cmd in
 			q) exit 0;;
 			r) _fn_reload;;
-			rr) rf_update "local" "/Users/ddnm/gitlab/ryda20/Runfile" && _fn_reload ;;
-			h) cd $RF_WORKING_DIR;;
+			rr) 
+				rf_update "local" "/Users/ddnm/gitlab/ryda20/Runfile"
+				_fn_reload
+				;;
+			h) 
+				cd $RF_WORKING_DIR
+				;;
 			*)
 				# if no input: ${#cmd} -eq 0. Nothing to check 
 				# -> show user functions only
@@ -368,8 +372,8 @@ __fn_list_check_loop() {
 					# actually it run in subshell and exit subshell
 					( exit 1 ) 
 				fi
-				__arrow_auto_set
 		esac
+		__arrow_auto_set
 	done
 }
 
