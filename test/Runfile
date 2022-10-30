@@ -4,6 +4,9 @@ source ${RF_DIR:-~/.Runfile}/Runfile.template # MUST_START_OF_FILE
 
 abc() {
 	echo "Abc task"
+	local x
+	x1=${1:-${x:-100}}
+	echo "x1: $x1"
 }
 
 abc2() {

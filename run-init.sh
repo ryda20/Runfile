@@ -14,8 +14,8 @@ else
 	read answer
 	if [ "${answer}" == "y" ]; then
 		msg="update Runfile is not sucessful"
-		start_of_file_new=$(sed -n '/MUST_START_OF_FILE$/p' ${RF_DIR:-~/.Runfile}/Runfile)
-		end_of_file_new=$(sed -n '/MUST_END_OF_FILE$/p' ${RF_DIR:-~/.Runfile}/Runfile)
+		start_of_file_new=$(sed -n '/MUST_START_OF_FILE$/p' ${RF_REPOS_DIR:-~/.Runfile}/Runfile)
+		end_of_file_new=$(sed -n '/MUST_END_OF_FILE$/p' ${RF_REPOS_DIR:-~/.Runfile}/Runfile)
 
 		runfile="./Runfile"
 		cp ${runfile} ${runfile}.tmp && \

@@ -1,20 +1,11 @@
 #!/bin/bash
-
-COLUMN_WIDTH=${RF_COLUMN_WIDTH:-30}
-COLUMN_NUMBER=${RF_COLUMN_NUMB:-3}
-LINE_LEN=${RF_LINE_WIDTH:-100}
-LINE_LEN_ALIAS=0
+# time format for time command
 TIMEFORMAT="Task completed in %3lR"
-# working mode:
-# 	loop: run inside while loop and user does not need to run with `run` command, just type the command user want
-#	normal: run with `run` command: run task args
-MODE=${RF_MODE:-loop}
 
-RUNFILE_DIR="$(pwd)"
-RUNFILE_FILE="${RUNFILE_DIR}/Runfile"
-RUNFILE_FILE_BK="/tmp/RunfileBk"
-AUTO_RELOAD=${RF_AUTO_RELOAD:-"yes"}
+declare -r RF_GIT=$( [[ -n "$( command -v git )" ]] && echo "yes" )
 
+# working dir: the root dir of Runfile
+declare -r RF_WORKING_DIR="$(pwd)"
 
 # tput Color Capabilities:
 #
@@ -40,7 +31,7 @@ AUTO_RELOAD=${RF_AUTO_RELOAD:-"yes"}
 # 3 – Yellow
 # 4 – Blue
 # 5 – Magenta
-# 6 – Cyan
+# 6 – Cyaninstall.sh
 # 7 – White
 
 #\001 -> \[, \002 -> \], i don't use \[ ... \] because it does not work, don't know why

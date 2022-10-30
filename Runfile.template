@@ -1,9 +1,10 @@
 #!/bin/bash -i
-RF_DIR=${RF_DIR:-~/.Runfile} # get RF_DIR from ENV or using default value
-source ${RF_DIR}/vars
+RF_REPOS_DIR=${RF_REPOS_DIR:-~/.Runfile} # get RF_REPOS_DIR from ENV or using default value
+source ${RF_REPOS_DIR}/vars
+source ${RF_REPOS_DIR}/utils
 
 # only include file end with _1 (enable), _0 (disable)
-for f in ${RF_DIR}/plugins/*_1; do
+for f in ${RF_REPOS_DIR}/plugins/*_1; do
 	# echo "loading: $f"
 	source ${f}
 done
@@ -57,47 +58,66 @@ _fn_list_by() {
 	echo "${str}"
 }
 
-_fn_row_format() {
-	local arr=${1}
-	local alias=${2:-""}
+# _fn_list show list of available functions
+_fn_list() {
+	local include_fn=${1:-""}
+	local exclude_fn=${2:-""}
+	local title=${3:-"all fn(s)"}
+	local alias=${4:-""}
+
+	# list functions formated by printf
+	local rowLen=0 rowX fname idx=0 fnList=""
+	local arr=($(_fn_list_by "${include_fn}" "${exclude_fn}")) # convert return string "x y z" to array by wrapped ()
 	local arr_len=${#arr[@]}
-	local idx=0
-	local columns=${COLUMN_NUMBER}
+	local columns=${RF_COLUMN_NUMB:-3}
+	local line_width=${RF_LINE_WIDTH:-100}
 	local description=""
-	local rowX=""
-	local padding=$(( LINE_LEN / columns - 4 )) # -4 because we added 4 char `%2d) ` and we don't want to increse line len more
+	local repos_dir=${RF_REPOS_DIR:-"~/.Runfile"}
+	# if [[ ${alias} == "alias" ]]; then columns=6; fi
+	local padding=$(( line_width / columns + 2 )) # plus 2 to always ceiling padding
+
+
+	if [[ ${arr_len} -eq 0 ]]; then
+		rf_log " not found any fn(s). Run: \`run help\` to see all defined fn(s)"
+		return;
+	fi
+	
 	for (( i=0; i < arr_len; i+=columns)); do
-		rowX="# " # `# ` 	-> + 2 chars
+		rowX=""
 		for (( j=0; j < columns; j++ )); do
 			idx=$(( i + j ))
-			if (( idx < arr_len )); then
+			if (( ${idx} < ${arr_len} )); then
 				fname=${arr[idx]}
 				if [[ ${alias} == "alias" ]]; then
 					# get descriptition.  how?
 					# find a alias file in plugins dir and echo it path to cat out content,
 					# then send to sed and find the matching, remove the matching part,
 					# then print out (by -n and p) the description
-					description=$(cat $(find ${RF_DIR}/plugins -type f -name 'alias_*_1'  -exec echo {} \;) | sed -n "s|^#${fname}: ||p")
+					aliasfile=$( find ${repos_dir}/plugins -type f -name 'alias_*_1' -exec echo {} \; )
+					description="$( cat ${aliasfile} | sed -n "s|^#${fname}: ||p" )"
 					if [[ -n ${description} ]]; then
-						fname="$(echo ${fname} | sed 's|alias_||' ) (${description})"
+						fname="$( echo ${fname} | sed 's|alias_||' ) (${description})"
 					else
-						fname="$(echo ${fname} | sed 's|alias_||' )"
+						fname="$( echo ${fname} | sed 's|alias_||' )"
 					fi
 					description=""
 				fi
-				# `%2d )` -> + 4 chars
 				rowX="${rowX}$( printf "%2d) %-${padding}s" $(( idx + 1 )) "${fname}" )"
 			else
-				# still keep space for "x) " - 4 spaces for formating correctly
-				rowX="${rowX}$( printf "    %-${padding}s" "" )"
+				#  last rowX, keep padding 
+				rowX="${rowX}$( printf "    %-${padding}s" " " )"
 			fi
 		done
-		rowX="$rowX#\n" # `\n`	-> + 2 chars
+		rowX="$rowX"$'\n'
+		if (( rowLen < ${#rowX} )); then rowLen=$(( ${#rowX} )); fi
+		fnList="${fnList}${rowX}"
 	done
-	echo "$rowX"
+	fnList="${fnList%'\n'}" # remove 2 chars at end of string out '\n', or using: ${out%??}
+	
+	rf_log_title "${title}" "${fnList}" ${rowLen}
 }
-# _fn_list show list of available functions
-_fn_list() {
+
+_fn_list_bk() {
 	local include_fn=${1:-""}
 	local exclude_fn=${2:-""}
 	local title=${3:-"all fn(s)"}
@@ -111,10 +131,12 @@ _fn_list() {
 	local arr=(${str}) # convert string "x y z" to array
 	local arr_len=${#arr[@]}
 	local idx=0
-	local columns=${COLUMN_NUMBER}
+	local columns=${RF_COLUMN_NUMB:-3}
+	local line_width=${RF_LINE_WIDTH:-100}
 	local description=""
+	local repos_dir=${RF_REPOS_DIR:-"~/.Runfile"}
 	# if [[ ${alias} == "alias" ]]; then columns=6; fi
-	local padding=$(( LINE_LEN / columns - 4 )) # -4 because we added 4 char `%2d) ` and we don't want to increse line len more
+	local padding=$(( line_width / columns - 4 )) # -4 because we added 4 char `%2d) ` and we don't want to increse line len more
 	
 	if [[ ${arr_len} -eq 0 ]]; then
 		rf_log " not found any fn(s). Run: \`run help\` to see all defined fn(s)"
@@ -132,7 +154,8 @@ _fn_list() {
 					# find a alias file in plugins dir and echo it path to cat out content,
 					# then send to sed and find the matching, remove the matching part,
 					# then print out (by -n and p) the description
-					description=$(cat $(find ${RF_DIR}/plugins -type f -name 'alias_*_1'  -exec echo {} \;) | sed -n "s|^#${fname}: ||p")
+					aliasfile=$( find ${repos_dir}/plugins -type f -name 'alias_*_1' -exec echo {} \; )
+					description="$( cat ${aliasfile} | sed -n "s|^#${fname}: ||p" )"
 					if [[ -n ${description} ]]; then
 						fname="$(echo ${fname} | sed 's|alias_||' ) (${description})"
 					else
@@ -149,10 +172,10 @@ _fn_list() {
 		done
 		rowX="$rowX#\n" # `\n`	-> + 2 chars
 		# set row len to send to rf_log_xxx
-		# - 4 because we add 4 chars and we want to keep LINE_LEN
+		# - 4 because we add 4 chars and we want to keep line width
 		# and set only one time because rows len is equal
 		# and must to subtract because some of chars does not display, so, the display will not true (\n)
-		if (( rowLen == 0 )); then rowLen=$(( ${#rowX} - 4 )); fi
+		if (( rowLen < ${#rowX} )); then rowLen=$(( ${#rowX} - 4 )); fi
 		fnList="${fnList}${rowX}"
 	done
 	fnList="${fnList%'\n'}" # remove 2 chars at end of string out '\n', or using: ${out%??}
@@ -182,12 +205,13 @@ run help rf
 		return
 	fi
 
+	local mode=${RF_MODE:-"loop"}
 	# else, show all
-	if [[ "${MODE}" == "loop" ]]; then _fn_exit_msg; fi
+	if [[ "${mode}" == "loop" ]]; then _fn_exit_msg; fi
 	# rf_log_title "Usage" "${str}"
 	#
-	# _fn_list "rf_" "" "runfile fn(s)"
-	# _fn_list "alias_" "" "alias fn(s)" "alias"
+	_fn_list "rf_" "" "runfile fn(s)"
+	_fn_list "alias_" "" "alias fn(s)" "alias"
 	_fn_list "" "_ rf_ alias_" "user fn(s)"
 }
 
@@ -224,11 +248,13 @@ __fn_list_check_normal () {
 _fn_exit_msg() {
 	rf_log_title "cmd(s)" "
 	q: quit
-	r: reload session"
+	r: reload session
+	h: help
+"
 }
 
 _fn_reload() {
-	clear && exec bash -c "${RUNFILE_FILE}"
+	clear && exec bash -c "${RF_WORKING_DIR}/Runfile"
 }
 
 
@@ -264,18 +290,16 @@ __fn_list_check_loop() {
 	}
 	
 	_fn_git_exist() {
-		[[ -n "$( command -v git )" ]] && [[ -d "${RUNFILE_DIR}/.git" ]] && echo "yes"
+		[[ -n "${RF_GIT}" ]] && [[ -d "${RF_WORKING_DIR}/.git" ]] && echo "yes"
 	}
 	# note: using function like command below will run every we call _git_exist, but this value is not change
 	# after we started, so, we call a function directly and save value to variable, later, just use this value
-	# local _git_exist=$( [[ -n "$( command -v git )" ]] && [[ -d "${RUNFILE_DIR}/.git" ]] && echo yes ) #"$(_fn_git_exist)"
 	local _git_exist="$(_fn_git_exist)"
 
 	_fn_git_info_start() {
 		[[ -n "${_git_exist}" ]] && echo "${RF_BLUE}git:("
 	}
 	local git_info_start="$(_fn_git_info_start)"
-	# local git_info_start="${BLUE}$( [[ -n "${_git_exist}" ]] && echo 'git:(' )"
 
 	_fn_git_info_mid(){
 		[[ -n "${_git_exist}" ]] && echo "${RF_RED}$( git rev-parse --abbrev-ref HEAD )"
@@ -293,15 +317,17 @@ __fn_list_check_loop() {
 	local dollar_char=$( if [[ "$USER" != "root" ]]; then echo "${RF_BLUE}\$"; else echo "${RF_RED}\#"; fi )
 	
 	# make a copy of Runfile
-	if [[ "${AUTO_RELOAD}" == "yes" ]]; then
-		rm -rf "${RUNFILE_FILE_BK}"
-		cp "${RUNFILE_FILE}" "${RUNFILE_FILE_BK}"
+	local runfilebk="/tmp/RunfileBk"
+	local autoreload=${RF_AUTO_RELOAD:-"yes"}
+	if [[ "${autoreload}" == "yes" ]]; then
+		rm -rf "${runfilebk}"
+		cp "${RF_WORKING_DIR}/Runfile" "${runfilebk}"
 	fi
 
 	while true ; do
 
 		# check if Runfile changed
-		if [[ "${AUTO_RELOAD}" == "yes" ]] && [[ "${RUNFILE_FILE}" -nt "$RUNFILE_FILE_BK" ]]; then
+		if [[ "${autoreload}" == "yes" ]] && [[ "${RF_WORKING_DIR}/Runfile" -nt "$runfilebk" ]]; then
 			#echo "Runfile was changed"
 			_fn_reload
 		fi
@@ -323,6 +349,7 @@ __fn_list_check_loop() {
 		case $cmd in
 			q) exit 0;;
 			r) _fn_reload;;
+			h) help;;
 			*)
 				# if no input: ${#cmd} -eq 0. Nothing to check 
 				# -> show user functions only
@@ -356,8 +383,9 @@ __fn_list_check_loop() {
 
 # __start_app must to call this function at the end of user Runfile
 __start_app() {
-	if [[ "${MODE}" == "loop" ]]; then
-		__fn_list_check_loop "$@"
+	local mode=${RF_MODE:-"loop"}
+	if [[ "${mode}" == "loop" ]]; then
+		__fn_list_check_loop
 	else
 		time __fn_list_check_normal "$@"
 	fi

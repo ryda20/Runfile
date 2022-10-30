@@ -31,13 +31,15 @@ alias_set() {
 #__====RF_START====
 alias run-init="cp ~/.Runfile/run-init.sh . && chmod +x ./run-init.sh && ./run-init.sh && rm ./run-init.sh"
 alias run=./Runfile
+#__ working mode: loop or normal
+export RF_MODE="normal"
 #__ space when print out help contents
 export RF_TAG_WIDTH=8
-export RF_LINE_WIDTH=100
+export RF_LINE_WIDTH=90
 export RF_COLUMN_WIDTH=30
 export RF_COLUMN_NUMB=3
 #__ github source dir
-export RF_DIR=~/.Runfile
+export RF_REPOS_DIR=~/.Runfile
 #__====RF_END====
 '
 	local processed_file=""
@@ -54,9 +56,10 @@ export RF_DIR=~/.Runfile
 		fi
 		
 		echo "alias setting up on: ${f}"
-		# clear all space before each line
+		# remove empty line and clear all space before each line
 		cp ${f} ${f}.tmp && \
 		sed \
+			-e '/^$/d' \
 			-e 's/^[ \t]*//' \
 			-e '/^alias run-init=.*$/d' \
 			-e '/^alias run=.*$/d' \
