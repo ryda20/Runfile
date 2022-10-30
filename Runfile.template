@@ -277,16 +277,6 @@ __fn_list_check_loop() {
 		if [[ "${path_pre}" != "${path_now}" ]]; then
 			path_pre="${path_now}"
 			#
-			path="$( echo "${path_now}" | sed -e s@$HOME@'~'@g )"
-			path="${RF_GREEN}$( basename ${path} ) "
-		fi
-	}
-	local path path_now path_pre
-	__path_auto_format(){
-		path_now=$( pwd )
-		if [[ "${path_pre}" != "${path_now}" ]]; then
-			path_pre="${path_now}"
-			#
 			path="$( echo "${path_now}" | sed -e "s@$HOME@~@g" )"
 			path="${RF_GREEN}$( basename ${path} ) "
 		fi
@@ -314,7 +304,12 @@ __fn_list_check_loop() {
 			done
 		)                                                                                                                                                                                                            
 		echo "$res$last"                                                                                                                                                                                                                                                         
-	} 
+	}
+	_fn_in_working_dir() {
+		[[ $( pwd ) == ${RF_WORKING_DIR}* ]] && echo "yes"
+		# [[ $a == z* ]]   # True if $a starts with a "z" (wildcard matching).
+		# [[ $a == "z*" ]] # True if $a is equal to z* (literal matching).
+	}
 	#
 	_fn_rf_dir() {
 		# h: stand for home working directory
@@ -336,30 +331,31 @@ __fn_list_check_loop() {
 		local exitcode=$?
 		[[ $exitcode -gt 0 ]] && arrow=${arrow_red} || arrow=${arrow_green}
 	}
-	
-	_fn_git_exist() {
-		[[ -n "${RF_GIT}" ]] && [[ -d "$( pwd )/.git" ]] && echo "yes"
+	#
+	_fn_git_dir_exist() {
+		if [[ -z "${RF_GIT}" ]]; then
+			return
+		fi
+		if [[ -d "$( pwd )/.git" ]]; then
+			echo "yes"
+		elif [[ -n "$( _fn_in_working_dir )" ]] && [[ -d "${RF_WORKING_DIR}/.git" ]]; then
+			echo "yes"
+		fi
 	}
-
 	_fn_git_info_start() {
-		[[ -n "$( _fn_git_exist )" ]] && echo "${RF_BLUE}git:("
+		[[ -n "$( _fn_git_dir_exist )" ]] && echo "${RF_BLUE}git:("
 	}
-	local git_info_start="$(_fn_git_info_start)"
-
 	_fn_git_info_mid(){
-		[[ -n "$( _fn_git_exist )" ]] && echo "${RF_RED}$( git rev-parse --abbrev-ref HEAD )"
+		[[ -n "$( _fn_git_dir_exist )" ]] && echo "${RF_RED}$( git rev-parse --abbrev-ref HEAD )"
 	}
-
 	_fn_git_info_end() {
-		[[ -n "$( _fn_git_exist )" ]] && echo "${RF_BLUE}) "
+		[[ -n "$( _fn_git_dir_exist )" ]] && echo "${RF_BLUE}) "
 	}
-	local git_info_end="$(_fn_git_info_end)"
-
 	_fn_git_status() {
-		[[ -z "$( _fn_git_exist )" ]] && echo -n "" || echo "$( [[ -n "$(git status --porcelain --untracked-files=no --ignore-submodules=dirty | tail -n 1)" ]] && echo "${RF_RED}✗ " || echo "${RF_GREEN}✔ " )"
+		[[ -z "$( _fn_git_dir_exist )" ]] && echo -n "" || echo "$( [[ -n "$(git status --porcelain --untracked-files=no --ignore-submodules=dirty | tail -n 1)" ]] && echo "${RF_RED}✗ " || echo "${RF_GREEN}✔ " )"
 	}
 
-	local dollar_char=$( if [[ "$USER" != "root" ]]; then echo "${RF_BLUE}\$"; else echo "${RF_RED}\#"; fi )
+	local final_sign=$( if [[ "$USER" != "root" ]]; then echo "${RF_BLUE}\$"; else echo "${RF_RED}\#"; fi )
 	
 	# make a copy of Runfile
 	local runfilebk="/tmp/RunfileBk"
