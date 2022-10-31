@@ -6,6 +6,12 @@ declare -r RF_GIT=$( [[ -n "$( command -v git )" ]] && echo "yes" )
 
 # working dir: the root dir of Runfile
 declare -r RF_WORKING_DIR="$(pwd)"
+# list of all functions (not nested function)
+FN_NAME_LIST=""
+# list of all alias files
+ALIAS_FILE_LIST="$( find "${RF_REPOS_DIR:-"~/.Runfile"}"/plugins -type f -name 'alias_*_1' -exec echo {} \; )"
+
+REPOS_DIR=${RF_REPOS_DIR:-"~/.Runfile"}
 
 # tput Color Capabilities:
 #

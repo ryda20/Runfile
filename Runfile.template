@@ -1,4 +1,4 @@
-#!/bin/bash -i
+#!/bin/bash
 RF_REPOS_DIR=${RF_REPOS_DIR:-~/.Runfile} # get RF_REPOS_DIR from ENV or using default value
 source "${RF_REPOS_DIR}/vars"
 source "${RF_REPOS_DIR}/utils"
@@ -8,14 +8,6 @@ for f in ${RF_REPOS_DIR}/plugins/*_1; do
 	# echo "loading: $f"
 	source "${f}"
 done
-
-# _fn_get_alias_files return list of all alias_*_1
-_fn_get_alias_files(){
-	local repos_dir=${RF_REPOS_DIR:-"~/.Runfile"}
-	echo "$( find ${repos_dir}/plugins -type f -name 'alias_*_1' -exec echo {} \; )"
-}
-
-ALIAS_FILE_LIST="$(_fn_get_alias_files)"
 
 # _fn_list_by return a string "func1 SEP func2 SEP func3 ...." with condition input
 _fn_list_by() {
@@ -27,7 +19,6 @@ _fn_list_by() {
 	# if exclude_fn is empty: mean does not exclude
 	# Ex: "_ rf_" - seperated by space
 	local exclude_fn=${2:-""} # priority 2
-	
 	local SEP=${3:-$'\n'}
 
 	# declare -F return all function name with format: 
@@ -35,12 +26,12 @@ _fn_list_by() {
 	#	declare -F fname2
 	#	.......
 	#	declare -F fnameN
-	local _rf_fn_list=$(echo $(declare -F) | sed 's/declare -f //g')
+	[[ -z "${FN_NAME_LIST}" ]] && FN_NAME_LIST=$(echo $( declare -F ) | sed 's/declare -f //g')
+	
 	local str=""
-	local repos_dir=${RF_REPOS_DIR:-"~/.Runfile"}
 	local aliasfile description
 	#
-	for f in ${_rf_fn_list}; do
+	for f in ${FN_NAME_LIST}; do
 		if [[ -n "${include_fn}" ]]; then
 			for i in ${include_fn}; do
 				if [[ "${f:0:${#i}}" == "${i}" ]]; then
@@ -71,6 +62,8 @@ _fn_list_by() {
 				# get the first value in f with len of exclude and then compare to exclude value, skip if it same
 				# ex: exclude = "tf_" 		-> len = 3
 				#	  f = "tf_log_title"	-> ${f:0:len} = tf_
+					# result=$([[ "${f:0:${#e}}" == "${e}" ]] && echo "yes" )
+					# echo "exclude: ${f:0:${#e}} vs ${e} => $result"
 				if [[ "${f:0:${#e}}" == "${e}" ]]; then continue 2; fi
 			done
 		fi
@@ -89,21 +82,22 @@ _fn_list() {
 	local title=${3:-"all fn(s)"}
 	#
 	local columns=${RF_COLUMN_NUMB:-3}
-	local line_width=${RF_LINE_WIDTH:-100}
-	local padding=$(( line_width / columns + 2 )) # plus 2 to always ceiling padding
-	local repos_dir=${RF_REPOS_DIR:-"~/.Runfile"}
-	#
+	local line_width=${RF_LINE_WIDTH:-90}	
 	#
 	local SEP=$'\n'
 	local str=$( _fn_list_by "${include_fn}" "${exclude_fn}" ${SEP} ) # return string with seperated is \n
 	# find len of array by seperated in str
 	local arr arr_len=0
+	local fname_length_max=0
 	local saveIFS="$IFS" && IFS="$SEP"
-	for line in ${str}; do 
-		arr[${arr_len}]="${line}"
-		arr_len=$(( arr_len+1 ))
+	for fname in ${str}; do 
+		arr[${arr_len}]="${fname}"
+		arr_len=$(( arr_len + 1 ))
+		# echo "$fname"
+		[[ ${fname_length_max} -lt ${#fname} ]] && fname_length_max="${#fname}"
 	done && IFS="$saveIFS"
-	# echo "len ${arr_len}"
+
+	local padding=$(( fname_length_max + 6 )) # +8 for more place holding space in row len (because the log will adding some chars)
 	
 	local rowLen=0 rowX fname idx=0 fnList="" description=""
 
@@ -117,14 +111,16 @@ _fn_list() {
 		for (( j=0; j < columns; j++ )); do
 			idx=$(( i + j ))
 			if (( ${idx} < ${arr_len} )); then
-				rowX="${rowX}$( printf "%2d) %-${padding}s" $(( idx + 1 )) "${arr[idx]}" )"
+				# echo "$idx: ${arr[$idx]}"
+				rowX="${rowX}$( printf "%02d) %-${padding}s" $(( idx + 1 )) "${arr[idx]}" )"
 			else
-				rowX="${rowX}$( printf "    %-${padding}s" " " )" #  last rowX, keep padding 
+				rowX="${rowX}$( printf "    %-${padding}s" "" )" #  last rowX, keep 4 spaces for same length with another columns
 			fi
 		done
-		rowX="${rowX}${SEP}"
-		[[ ${rowLen} -lt ${#rowX} ]] && rowLen=$(( ${#rowX} ))
-		fnList="${fnList}${rowX}"
+
+		# echo "rowLen: ${rowLen}, rowX len: ${#rowX}, $rowX"
+		[[ ${rowLen} -lt ${#rowX} ]] && rowLen=${#rowX}
+		fnList="${fnList}${rowX}${SEP}"
 	done
 	fnList="${fnList%${SEP}}" # remove 2 chars at end of string out '\n', or using: ${out%??}
 	
@@ -161,7 +157,7 @@ run help rf
 
 	_fn_list "rf_" "" "runfile fn(s)"
 	_fn_list "alias_" "" "alias fn(s)"
-	_fn_list "" "_ rf_ alias_" "user fn(s)"
+	_fn_list "" "rf_ alias_" "user fn(s)"
 }
 
 
@@ -175,7 +171,7 @@ __fn_list_check_normal () {
 	# -> show user functions only
 	# -> hide functions start with _ and rf_ and alias_
 	if [[ -z "${cmd}" ]]; then
-		_fn_list "" "_ rf_ alias_" "user fn(s)"
+		_fn_list "" "rf_ alias_" "user fn(s)"
 		return
 	fi
 	
@@ -217,8 +213,6 @@ __fn_list_check_loop() {
 	_fn_exit_msg
 
 	declare cmd args
-	# return user functions and build-in function, exclude internal function (start with _)
-	__fn_list=$(_fn_list_by "" "_")
 	
 	#
 	local path path_now path_pre
@@ -357,7 +351,7 @@ __fn_list_check_loop() {
 				# -> show user functions only
 				# -> hide functions start with _ and rf_ and alias_
 				if [[ -z "${cmd}" ]]; then
-					time _fn_list "" "_ rf_ alias_" "user fn(s)"
+					time _fn_list "" "rf_ alias_" "user fn(s)"
 					echo
 					continue
 				fi
@@ -382,12 +376,14 @@ __fn_list_check_loop() {
 	done
 }
 
-
 # __start_app must to call this function at the end of user Runfile
 __start_app() {
+	# load all load function (not include nested functions) into variable and remove fn start with "_"
+	# on first load
+	FN_NAME_LIST=$( _fn_list_by "" "_" $'\n' )
+	# echo "${FN_NAME_LIST}"
 	# check update
 	rf_check_update
-
 	# start app
 	local mode=${RF_MODE:-"loop"}
 	if [[ "${mode}" == "loop" ]]; then

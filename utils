@@ -1,27 +1,41 @@
 #!/bin/bash
 
+_fn_str_prefix() {
+	local str=${1}
+	local prefix=${2}
+
+	[[ "${str}" == ${prefix}* ]] && echo "yes"
+		# [[ $a == z* ]]   # True if $a starts with a "z" (wildcard matching).
+		# [[ $a == "z*" ]] # True if $a is equal to z* (literal matching).
+}
+
 rf_version() {
 	echo $(date '+%Y%m%d%H%M%S') > version.txt
 }
 
+
 # rf_check_update will check if it available in new verion
 rf_check_update() {
-	rf_log_prefix="update"
+	rf_log_header "update checking"
 	#
-	local fversion="https://gitlab.com/ryda20/runfile/-/raw/master/version.txt"
-	local check_code=$(curl -o /dev/null --silent -Iw '%{http_code}' "${fversion}")
-	[[ "${check_code}" != "200" ]] && echo "not found"; return
-	
+	local url="https://gitlab.com/ryda20/runfile/-/raw/master/version.txt"
+	local check_code=$(curl -o /dev/null --silent -Iw '%{http_code}' "${url}")
+	[[ "${check_code}" != "200" ]] && rf_log "not found version.txt file" && return
+	rf_log "http-code: ${check_code}"
 	#
-	local rf_repos_dir=${RF_REPOS_DIR:-~/Runfile}
-	local rversion=$(curl -fsSL https://gitlab.com/ryda20/runfile/-/raw/master/version.txt) || ""
-	local lversion=$(cat "${rf_repos_dir}/version.txt") || ""
+	local rversion=$(curl -fsSL "${url}")
+	rf_log "remote version: \t${rversion}"
+	[[ -z "${rversion}" ]] && rf_log "not found version value" && return
+
+	local lversion=$(cat "${REPOS_DIR}/version.txt")
+	rf_log "local version:  \t${lversion}"
 	if [[ "${rversion}" != "${lversion}" ]]; then
 		read -p "A new version is available. Do you want to update? [Y/n]" answer
-		[[ "${answer}" == "Y" ]] && rf_update || echo "nothing changed"
+		[[ "${answer}" == "Y" ]] && rf_update || rf_log "nothing changed" && return
 	else
-		rf_log_header "You have latest version"
+		rf_log "You have latest version!"
 	fi
+	rf_log_end
 }
 
 # _rf_update run update runfile
@@ -29,12 +43,11 @@ rf_update() {
 	local mode="${1}"
 	local dir="${2:-.}"
 	#
-	local rf_repos_dir=${RF_REPOS_DIR:-~/Runfile}
 	if [[ "${mode}" == "local" ]]; then
 		#local install
 		bash ${dir}/install.sh local
 	else
-		bash "${rf_repos_dir}/install.sh" update
+		bash "${REPOS_DIR}/install.sh" update
 	fi
 }
 
