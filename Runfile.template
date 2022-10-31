@@ -1,4 +1,4 @@
-#!/bin/bash -i
+#!/bin/bash
 RF_REPOS_DIR=${RF_REPOS_DIR:-~/.Runfile} # get RF_REPOS_DIR from ENV or using default value
 source "${RF_REPOS_DIR}/vars"
 source "${RF_REPOS_DIR}/utils"
@@ -9,129 +9,79 @@ for f in ${RF_REPOS_DIR}/plugins/*_1; do
 	source "${f}"
 done
 
-# _fn_get_alias_files return list of all alias_*_1
-_fn_get_alias_files(){
-	local repos_dir=${RF_REPOS_DIR:-"~/.Runfile"}
-	echo "$( find ${repos_dir}/plugins -type f -name 'alias_*_1' -exec echo {} \; )"
-}
-
-ALIAS_FILE_LIST="$(_fn_get_alias_files)"
-
-# _fn_list_by return a string "func1 SEP func2 SEP func3 ...." with condition input
-_fn_list_by() {
-	# include_fn is a list of "start_with" string need to be keep in return list
-	# if include_fn is empty: mean include all
-	# Ex: "keep_me rf_" -> seperated by space
-	local include_fn=${1:-""} # priority 1
-	# exclude_fn is a list of "start_with" string need to be exclude in return list
-	# if exclude_fn is empty: mean does not exclude
-	# Ex: "_ rf_" - seperated by space
-	local exclude_fn=${2:-""} # priority 2
-	
-	local SEP=${3:-$'\n'}
-
-	# declare -F return all function name with format: 
-	#	declare -F fname1
-	#	declare -F fname2
-	#	.......
-	#	declare -F fnameN
-	local _rf_fn_list=$(echo $(declare -F) | sed 's/declare -f //g')
-	local str=""
-	local repos_dir=${RF_REPOS_DIR:-"~/.Runfile"}
-	local aliasfile description
-	#
-	for f in ${_rf_fn_list}; do
-		if [[ -n "${include_fn}" ]]; then
-			for i in ${include_fn}; do
-				if [[ "${f:0:${#i}}" == "${i}" ]]; then
-					# find description for alias
-					if [[ "$( _fn_str_prefix "$f" "alias_" )" == "yes" ]]; then
-						# how?
-						# find a alias file in plugins dir and echo it path to cat out content,
-						# then send to sed and find the matching, remove the matching part,
-						# then print out (by -n and p) the description
-						if [[ -z "${ALIAS_FILE_LIST}" ]]; then ALIAS_FILE_LIST="$(_fn_get_alias_files)"; fi
-						description="$( cat ${ALIAS_FILE_LIST} | sed -n "s|^#${f}: ||p" )"
-						if [[ -n ${description} ]]; then
-							f="$( echo ${f} | sed 's|alias_||' ) (${description})"
-						else
-							f="$( echo ${f} | sed 's|alias_||' )"
-						fi
-						description=""
-					fi
-					str="${str}${f}"${SEP}
-					continue 2 # skip this for and continue on parent for loop
-				fi
-			done
-			continue
-		fi
-		# check exclude list
-		if [[ -n "${exclude_fn}" ]]; then
-			for e in ${exclude_fn}; do
-				# get the first value in f with len of exclude and then compare to exclude value, skip if it same
-				# ex: exclude = "tf_" 		-> len = 3
-				#	  f = "tf_log_title"	-> ${f:0:len} = tf_
-				if [[ "${f:0:${#e}}" == "${e}" ]]; then continue 2; fi
-			done
-		fi
-		
-		# normally case
-		str="${str}${f}"${SEP}
-	done
-	# return string
-	echo "${str}"
-}
-
 # _fn_list show list of available functions
 _fn_list() {
-	local include_fn=${1:-""}
-	local exclude_fn=${2:-""}
-	local title=${3:-"all fn(s)"}
-	#
-	local columns=${RF_COLUMN_NUMB:-3}
-	local line_width=${RF_LINE_WIDTH:-100}
-	local padding=$(( line_width / columns + 2 )) # plus 2 to always ceiling padding
-	local repos_dir=${RF_REPOS_DIR:-"~/.Runfile"}
-	#
+	local list_by=${1:-"user"}
+	local title=${2:-"all fn(s)"}
 	#
 	local SEP=$'\n'
-	local str=$( _fn_list_by "${include_fn}" "${exclude_fn}" ${SEP} ) # return string with seperated is \n
-	# find len of array by seperated in str
 	local arr arr_len=0
-	local saveIFS="$IFS" && IFS="$SEP"
-	for line in ${str}; do 
-		arr[${arr_len}]="${line}"
-		arr_len=$(( arr_len+1 ))
-	done && IFS="$saveIFS"
-	# echo "len ${arr_len}"
-	
-	local rowLen=0 rowX fname idx=0 fnList="" description=""
-
+	local fname_length_max=0
+	#
+	[[ -z "${FN_NAME_LIST}" ]] && FN_NAME_LIST=$(echo $( declare -F ) | sed 's/declare -f //g')
+	#
+	rf_debug "list_by: ${list_by}"
+	#
+	local saveIFS=$IFS && IFS=$SEP
+	for fname in ${FN_NAME_LIST}; do
+		if [[ "${list_by}" == "user" ]]; then
+			# skip rf_ and alias_
+			[[ "${fname:0:3}" == "rf_" ]] && rf_debug "skip fname: ${fname}" && continue
+			[[ "${fname:0:6}" == "alias_" ]] && rf_debug "skip fname: ${fname}" &&continue
+		else
+			# fname != "user" and != list_by -> skip
+			[[ "${fname:0:${#list_by}}" != "${list_by}" ]] && rf_debug "skip fname: ${fname}" && continue
+		fi
+		# remove alias_ prefix if have
+		[[ "${fname:0:6}" == "alias_" ]] && fname="$( echo ${fname} | sed 's|alias_||' )" && rf_debug "remove alias_ prefix"
+		# add to arr
+		arr[${arr_len}]="${fname}"
+		arr_len=$(( arr_len + 1 ))
+		# check length of fname and change fname_length_max if need
+		[[ ${fname_length_max} -lt ${#fname} ]] && fname_length_max="${#fname}"
+	done && IFS=$saveIFS
+	#
 	if [[ ${arr_len} -eq 0 ]]; then
-		rf_log " not found any fn(s). Run: \`run help\` to see all defined fn(s)"
+		rf_log "Not found any fn by \"${list_by}\""
 		return;
 	fi
-	
+	#
+	local padding=$(( fname_length_max + 8 )) # +8 for more place holding space in row len (because the log will adding some chars)
+	local rowX idx=0 fnList=""
+	local columns=${RF_COLUMN_NUMB:-3}
+
 	for (( i=0; i < arr_len; i+=columns)); do
 		rowX=""
 		for (( j=0; j < columns; j++ )); do
 			idx=$(( i + j ))
 			if (( ${idx} < ${arr_len} )); then
-				rowX="${rowX}$( printf "%2d) %-${padding}s" $(( idx + 1 )) "${arr[idx]}" )"
-			else
-				rowX="${rowX}$( printf "    %-${padding}s" " " )" #  last rowX, keep padding 
+				# -4 because i was add 4 char: "xx) "
+				rowX="${rowX}$( printf "%02d) %-$((padding - 4))s" $(( idx + 1 )) "${arr[idx]}" )"
+			# else
+			# 	rowX="${rowX}$( printf "%-${padding}s" " " )" #  last item in row
 			fi
 		done
-		rowX="${rowX}${SEP}"
-		[[ ${rowLen} -lt ${#rowX} ]] && rowLen=$(( ${#rowX} ))
-		fnList="${fnList}${rowX}"
+		fnList="${fnList}${rowX}${SEP}"
 	done
 	fnList="${fnList%${SEP}}" # remove 2 chars at end of string out '\n', or using: ${out%??}
 	
-	rf_log_title "${title}" "${fnList}" ${rowLen}
+	rf_debug "padding: ${padding}, columns: ${columns}, row len: ${rowLen}"
+	
+	line_width=$(( padding * columns ))
+	rf_log_title "${list_by} fn(s)" "${fnList}" ${line_width}
 }
 
-
+_fn_user_list() {
+	_fn_list "user"
+}
+_fn_alias_list() {
+	local filter=${1}
+	_fn_list "alias_${filter}"
+}
+_fn_rf_list() {
+	local filter=${1}
+	_fn_list "rf_${filter}"
+}
 
 help() {
 	local str="
@@ -143,25 +93,13 @@ run help rf
 	=> to show internal rf fn only
 "
 	local cmd=${1}
-	local alias_filter=${2}
+	local filter=${2}
 
-	if [[ "${cmd}" == "alias" ]]; then
-		# show alias
-		_fn_list "alias_${alias_filter}" "" "alias fn(s)"
-		return
-	fi
-	if [[ "${cmd}" == "rf" ]]; then
-		_fn_list "rf_" "" "rf fn(s)"
-		return
-	fi
-
-	local mode=${RF_MODE:-"loop"}
-	# else, show all
-	if [[ "${mode}" == "loop" ]]; then _fn_exit_msg; fi
-
-	_fn_list "rf_" "" "runfile fn(s)"
-	_fn_list "alias_" "" "alias fn(s)"
-	_fn_list "" "_ rf_ alias_" "user fn(s)"
+	[[ "${cmd}" == "alias" ]] && _fn_alias_list "${filter}" && return
+	[[ "${cmd}" == "rf" ]] && _fn_rf_list "${filter}" && return
+	_fn_rf_list
+	_fn_alias_list
+	_fn_user_list
 }
 
 
@@ -175,7 +113,7 @@ __fn_list_check_normal () {
 	# -> show user functions only
 	# -> hide functions start with _ and rf_ and alias_
 	if [[ -z "${cmd}" ]]; then
-		_fn_list "" "_ rf_ alias_" "user fn(s)"
+		_fn_user_list
 		return
 	fi
 	
@@ -217,8 +155,6 @@ __fn_list_check_loop() {
 	_fn_exit_msg
 
 	declare cmd args
-	# return user functions and build-in function, exclude internal function (start with _)
-	__fn_list=$(_fn_list_by "" "_")
 	
 	#
 	local path path_now path_pre
@@ -333,21 +269,16 @@ __fn_list_check_loop() {
 
 		__path_auto_format
 
-		# -e for tab completion on dir or file name => it make error below
-		# got error: Terminal prompt not wrapping correctly
-		# read -p "${BRIGHT}${arrow}${path}$( _fn_git_info_start )$( _fn_git_info_mid )$( _fn_git_info_end )$( _fn_git_status )${final_sign}${NORMAL} " cmd args
-		#
-		# below have small error like above but happend in the second line
-		# echo -en "${BRIGHT}${arrow}${path}$( _fn_git_info_start )$( _fn_git_info_mid )$( _fn_git_info_end )$( _fn_git_status )${final_sign}${NORMAL}"
-		# read -e -p " " cmd args
-		#
+		#make sure IFS is default for read command run correctly
+		IFS=$IFS_ORI
+		
 		# below is work ok
 		read -e -p "${RF_BRIGHT}${arrow}${path}$( _fn_git_info_start )$( _fn_git_info_mid )$( _fn_git_info_end )$( _fn_git_status )${final_sign}${RF_NORMAL} " cmd args
-		
 		case $cmd in
 			q) exit 0;;
 			r) _fn_reload;;
 			rr)
+				# local reinstall - for dev only
 				rf_update "local"
 				_fn_reload
 				;;
@@ -356,11 +287,7 @@ __fn_list_check_loop() {
 				# if no input: ${#cmd} -eq 0. Nothing to check 
 				# -> show user functions only
 				# -> hide functions start with _ and rf_ and alias_
-				if [[ -z "${cmd}" ]]; then
-					time _fn_list "" "_ rf_ alias_" "user fn(s)"
-					echo
-					continue
-				fi
+				[[ -z "${cmd}" ]] && time _fn_user_list && continue
 				
 				# check if the ${cmd} available or not (build-in command or user command, functions, alias function)
 				# https://stackoverflow.com/questions/592620/how-can-i-check-if-a-program-exists-from-a-bash-script
@@ -382,17 +309,58 @@ __fn_list_check_loop() {
 	done
 }
 
+_fn_list_all() {
+	
+	local SEP=$'\n'
+
+	# declare -F return all function name with format: 
+	#	declare -F fname1
+	#	declare -F fname2
+	#	.......
+	#	declare -F fnameN
+	FN_NAME_LIST=$(echo $( declare -F ) | sed 's/declare -f //g')
+	
+	local str=""
+	local aliasfile description
+	#
+	IFS=$IFS_ORI
+	for f in ${FN_NAME_LIST}; do
+		[[ "${f:0:1}" == "_" ]] && continue
+		if [[ "${f:0:6}" == "alias_" ]]; then
+			# how?
+			# find a alias file in plugins dir and echo it path to cat out content,
+			# then send to sed and find the matching, remove the matching part,
+			# then print out (by -n and p) the description
+			if [[ -z "${ALIAS_FILE_LIST}" ]]; then ALIAS_FILE_LIST="$(_fn_get_alias_files)"; fi
+			description="$( cat ${ALIAS_FILE_LIST} | sed -n "s|^#${f}: ||p" )"
+			[[ -n ${description} ]] && f="${f} (${description})"
+			description=""
+		fi
+		#
+		str="${str}${f}${SEP}"
+	done
+	# return string
+	echo "${str}"
+}
 
 # __start_app must to call this function at the end of user Runfile
 __start_app() {
+	# load all load function (not include nested functions) into variable and remove fn start with "_"
+	# on first load
+	FN_NAME_LIST=$(_fn_list_all)
+	# echo "${FN_NAME_LIST}"
 	# check update
-	rf_check_update
+	[[ "${RF_AUTO_UPDATE}" == "yes" ]] && rf_check_update
+	
+	# force loop mode: run with command: `run loop`
+	[[ "${1}" == "loop" ]] && rf_log "forcing running in loop mode" && __fn_list_check_loop && return
+	
 
-	# start app
 	local mode=${RF_MODE:-"loop"}
 	if [[ "${mode}" == "loop" ]]; then
 		__fn_list_check_loop
-	else
-		time __fn_list_check_normal "$@"
+		return
 	fi
+	# normally mode
+	time __fn_list_check_normal "$@"
 }

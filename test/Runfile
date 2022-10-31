@@ -12,7 +12,7 @@ _fn_str_prefix() {
 }
 
 
-rf_ex1() {
+ex1() {
 	rf_log_prefix="build"
 	rf_log_title "Example" "
 Description:
@@ -30,7 +30,7 @@ Note:
 }
 
 
-rf_ex2() {
+ex2() {
 	local cmd=${1}; shift
 	local args=${@}
 	# rf_log "cmd: ${cmd}, args: ${args}"

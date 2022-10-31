@@ -19,53 +19,80 @@ colors_index=0
 colors_index_pre=0
 random_color=${colors[$colors_index]}  # default color is black
 
-rf_log_prefix=""
+rf_debug() {
+	if [[ -f "debug.txt" ]]; then
+		rf_log "${1}"
+	fi
+}
+_rf_log_tab_replace() {
+	echo -e "${1}" | sed 's/\t/    /g'
+}
 
 rf_log() {
+	local str=${1}
+	local prefix=${2:-"# "}
+	local suffix=${3:-"#"}
+	str=` _rf_log_tab_replace "${str}" `
 	# some system dont show correctly color, so, i force to use
-	_log_prefix_init
-	str="${random_color}#"
-	if [ -n "${rf_log_prefix}" ]; then str="${str}${rf_log_prefix}"; fi
-	echo -e "${str}${@}${NC}"
+	local line_width=${2:-${RF_LINE_WIDTH:-90}}
+	# echo "line_width: ${line_width}"
+	local padding=$(( line_width - ${#str} - ${#prefix} - ${#suffix} ))
+	_repeat $padding " " "${random_color}${prefix}${str}" "${suffix}${NC}"
 }
 
 rf_log_header() {
 	local str=${1:-""}
-	local line_width=${2:-${RF_LINE_WIDTH:-100}}
+	str=` _rf_log_tab_replace "${str}" `
+	# local prefix=${2:-"####"}
+	# local suffix=${3:-"#"}
+	local line_width=${2:-${RF_LINE_WIDTH:-90}}
+	# echo "rf_log_header->line_width: ${line_width}"
 	_random_color_gen
 	str="#### ${str} ####" # we add more text to prefix and suffix
-	len=$(( line_width - ${#str} + 1 )) # +1 because we add more # at the end of header
+	padding=$(( line_width - ${#str} - 1 )) # -1 because we add more # at suffix
+	# echo "padding: ${padding}"
 	# $1: len, $2: repeat_string, $3: prefix, $4: suffix
-	_repeat ${len} "=" "${random_color}${str}" "#${NC}"
+	_repeat ${padding} "=" "${random_color}${str}" "#${NC}"
 }
 
 rf_log_title() {
-	local title=${1:-}
-	local content=${2:-""}
-	local line_width=${3:-${RF_LINE_WIDTH:-100}}
+	local title=${1:-""}
+	local str=${2:-""}
+	str=` _rf_log_tab_replace "${str}" `
+	local line_width=${3:-${RF_LINE_WIDTH:-90}}
 	local ifs=${4:-$'\n'}
 
-	_log_prefix_init
+	local prefix="# "
+	local suffix="#"
 
-	# echo "line_width: ${line_width}"
-	# print out - start - seperated line
+	# re-calculate line_width with prefix and suffix
+	line_width=$(( line_width + ${#prefix} + ${#suffix} ))
+
+	local padding=0
+
+	# print out header
 	rf_log_header "${title}" ${line_width}
 	
-	local saveIFS="$IFS"
-	IFS=$ifs
-	for line in ${content}; do
-		# replace tab with 4 spaces, adding "# " on front of line
-		line="# $( echo "${line}" | sed "s/\t/    /g" )"
-		printf "${random_color}%-$(( line_width +1 ))s#${NC}\n" "$line" # +1 because we add # at end of line
+	local saveIFS="$IFS" && IFS=$ifs
+	for line in ${str}; do
+		line="$( _rf_log_tab_replace "${line}" )"
+		padding=$(( line_width - ${#line} - ${#prefix} - ${#suffix} ))
+		# echo "line len: ${#line}, padding: ${padding}"
+		[[ $padding -lt 1 ]] && padding=0
+		_repeat ${padding} " " "${prefix}${line}" "${suffix}"
 	done
-	_repeat ${line_width} "=" "${random_color}#" "#${NC}"
+	rf_log_end ${line_width}
 	IFS="$saveIFS"
 }
 
-_log_prefix_init() {
-	if [ -n "${_log_prefix}" ] && [ ${_log_prefix::1} != "[" ]; then
-		_log_prefix="[${_log_prefix}]"
-	fi
+rf_log_end() {
+	local line_width=${1:-${RF_LINE_WIDTH:-90}}
+	local prefix=${2:-"#"}
+	local suffix=${3:-"#"}
+	
+	local padding=$(( line_width - ${#prefix} - ${#suffix} )) # -2 because i want to keep line_width but i was added 2 #
+	_repeat ${padding} "=" "${prefix}" "${suffix}"
+	# echo # make new line
 }
 
 # Repeat given char N times using shell function
@@ -73,21 +100,20 @@ _log_prefix_init() {
 # 	-e here enables the interpretation of backslash escapes
 # 	-n : this option is used to omit echoing trailing newline 
 _repeat() {
-	local end=${1:-80}
-	local repeat_str="${2:-=}"
+	local line_width=${1:-${RF_LINE_WIDTH:-90}}
+	local str="${2:-}"
 	local prefix="${3:-}"
 	local suffix="${4:-}"
-	# range start at 1
-	local range=$(seq 1 ${end})
 
 	# add prefix on start
-	echo -en "${prefix}"
-	#
-	for i in $range; do echo -n "${repeat_str}"; done
-	# add suffix on end
-	echo -e "${suffix}"
+	echo -en "${random_color}${prefix}"
+	if [[ $line_width -gt 0 ]]; then
+		# range start at 1
+		local range=$( seq 1 ${line_width} )
+		for i in $range; do echo -n "${str}"; done
+	fi
+	echo -e "${suffix}${NC}"
 }
-
 
 _random_color_gen() {
 	# generate random color, RANDOM is a bash shell value
