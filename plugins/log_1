@@ -19,6 +19,11 @@ colors_index=0
 colors_index_pre=0
 random_color=${colors[$colors_index]}  # default color is black
 
+rf_debug() {
+	if [[ -f "debug.txt" ]]; then
+		rf_log "${1}"
+	fi
+}
 _rf_log_tab_replace() {
 	echo -e "${1}" | sed 's/\t/    /g'
 }
@@ -87,7 +92,7 @@ rf_log_end() {
 	
 	local padding=$(( line_width - ${#prefix} - ${#suffix} )) # -2 because i want to keep line_width but i was added 2 #
 	_repeat ${padding} "=" "${prefix}" "${suffix}"
-	echo # make new line
+	# echo # make new line
 }
 
 # Repeat given char N times using shell function
@@ -108,21 +113,6 @@ _repeat() {
 		for i in $range; do echo -n "${str}"; done
 	fi
 	echo -e "${suffix}${NC}"
-}
-_repeat_bk() {
-	local end=${1:-80}
-	local repeat_str="${2:-=}"
-	local prefix="${3:-}"
-	local suffix="${4:-}"
-	# range start at 1
-	local range=$(seq 1 ${end})
-
-	# add prefix on start
-	echo -en "${prefix}"
-	#
-	for i in $range; do echo -n "${repeat_str}"; done
-	# add suffix on end
-	echo -e "${suffix}"
 }
 
 _random_color_gen() {

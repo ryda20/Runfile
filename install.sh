@@ -40,6 +40,7 @@ export RF_COLUMN_WIDTH=30
 export RF_COLUMN_NUMB=3
 #__ github source dir
 export RF_REPOS_DIR=~/.Runfile
+export RF_AUTO_UPDATE="no"
 #__====RF_END====
 '
 	local processed_file=""
