@@ -8,9 +8,14 @@ rf_version() {
 rf_check_update() {
 	rf_log_prefix="update"
 	#
+	local fversion="https://gitlab.com/ryda20/runfile/-/raw/master/version.txt"
+	local check_code=$(curl -o /dev/null --silent -Iw '%{http_code}' "${fversion}")
+	[[ "${check_code}" != "200" ]] && echo "not found"; return
+	
+	#
 	local rf_repos_dir=${RF_REPOS_DIR:-~/Runfile}
-	local rversion=$(curl -fsSL https://gitlab.com/ryda20/runfile/-/raw/master/version.txt)
-	local lversion=$(cat "${rf_repos_dir}/version.txt")
+	local rversion=$(curl -fsSL https://gitlab.com/ryda20/runfile/-/raw/master/version.txt) || ""
+	local lversion=$(cat "${rf_repos_dir}/version.txt") || ""
 	if [[ "${rversion}" != "${lversion}" ]]; then
 		read -p "A new version is available. Do you want to update? [Y/n]" answer
 		[[ "${answer}" == "Y" ]] && rf_update || echo "nothing changed"
