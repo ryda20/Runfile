@@ -42,7 +42,7 @@ _fn_list() {
 	done && IFS=$saveIFS
 	#
 	if [[ ${arr_len} -eq 0 ]]; then
-		rf_log "Please define function in your Runfile!"
+		rf_log "Not found any fn by \"${list_by}\""
 		return;
 	fi
 	#
