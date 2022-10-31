@@ -352,11 +352,15 @@ __start_app() {
 	# check update
 	[[ "${RF_AUTO_UPDATE}" == "yes" ]] && rf_check_update
 	
+	# force loop mode: run with command: `run loop`
+	[[ "${1}" == "loop" ]] && __fn_list_check_loop && return
+	
+
 	local mode=${RF_MODE:-"loop"}
-	# start app
 	if [[ "${mode}" == "loop" ]]; then
 		__fn_list_check_loop
-	else
-		time __fn_list_check_normal "$@"
+		return
 	fi
+	# normally mode
+	time __fn_list_check_normal "$@"
 }
