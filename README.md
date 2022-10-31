@@ -19,11 +19,11 @@ I use it to replace with my Makefile because i have some difficulty to write bas
 ## Usage
 ### Two operation mode: NORMAL and LOOP
     You can change the mode by change RF_MODE env to `loop` or `normal`
-1. The Normal mode:
+1. The Normal mode (default):
     
     Working in normally way, type `run task args` then `enter` to execute command.
 
-2. The Loop mode (default):
+2. The Loop mode:
    
    Working in a infinite loop, you don't need to type `run task args` anymore. 
    

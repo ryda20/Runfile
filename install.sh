@@ -32,7 +32,7 @@ alias_set() {
 alias run-init="cp ~/.Runfile/run-init.sh . && chmod +x ./run-init.sh && ./run-init.sh && rm ./run-init.sh"
 alias run=./Runfile
 #__ working mode: loop or normal
-export RF_MODE="loop"
+export RF_MODE="normal"
 #__ space when print out help contents
 export RF_TAG_WIDTH=8
 export RF_LINE_WIDTH=90
