@@ -1,29 +1,35 @@
 #!/bin/bash
 
-_fn_str_prefix() {
-	local str=${1}
-	local prefix=${2}
-
-	[[ "${str}" == ${prefix}* ]] && echo "yes"
-		# [[ $a == z* ]]   # True if $a starts with a "z" (wildcard matching).
-		# [[ $a == "z*" ]] # True if $a is equal to z* (literal matching).
+rf_version() {
+	echo $(date '+%Y%m%d%H%M%S') > version.txt
 }
 
 # rf_check_update will check if it available in new verion
 rf_check_update() {
 	rf_log_prefix="update"
-	rf_log "function is not implemented yet"
+	#
+	local rf_repos_dir=${RF_REPOS_DIR:-~/Runfile}
+	local rversion=$(curl -fsSL https://gitlab.com/ryda20/runfile/-/raw/master/version.txt)
+	local lversion=$(cat "${rf_repos_dir}/version.txt")
+	if [[ "${rversion}" != "${lversion}" ]]; then
+		read -p "A new version is available. Do you want to update? [Y/n]" answer
+		[[ "${answer}" == "Y" ]] && rf_update || echo "nothing changed"
+	else
+		rf_log_header "You have latest version"
+	fi
 }
 
 # _rf_update run update runfile
 rf_update() {
 	local mode="${1}"
 	local dir="${2:-.}"
+	#
+	local rf_repos_dir=${RF_REPOS_DIR:-~/Runfile}
 	if [[ "${mode}" == "local" ]]; then
 		#local install
-		${dir}/install.sh local
+		bash ${dir}/install.sh local
 	else
-		sh ${RF_REPOS_DIR:-~/.Runfile}/install.sh update
+		bash "${rf_repos_dir}/install.sh" update
 	fi
 }
 

@@ -2,6 +2,16 @@
 source ${RF_DIR:-~/.Runfile}/Runfile.template # MUST_START_OF_FILE
 ##regison USER ===================================================
 
+_fn_str_prefix() {
+	local str=${1}
+	local prefix=${2}
+
+	[[ "${str}" == ${prefix}* ]] && echo "yes"
+		# [[ $a == z* ]]   # True if $a starts with a "z" (wildcard matching).
+		# [[ $a == "z*" ]] # True if $a is equal to z* (literal matching).
+}
+
+
 rf_ex1() {
 	rf_log_prefix="build"
 	rf_log_title "Example" "

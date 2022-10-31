@@ -131,6 +131,8 @@ _fn_list() {
 	rf_log_title "${title}" "${fnList}" ${rowLen}
 }
 
+
+
 help() {
 	local str="
 run <fn_name> <args>
@@ -383,6 +385,10 @@ __fn_list_check_loop() {
 
 # __start_app must to call this function at the end of user Runfile
 __start_app() {
+	# check update
+	rf_check_update
+
+	# start app
 	local mode=${RF_MODE:-"loop"}
 	if [[ "${mode}" == "loop" ]]; then
 		__fn_list_check_loop
