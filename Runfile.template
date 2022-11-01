@@ -135,7 +135,9 @@ __fn_list_check_normal () {
 }
 
 _fn_exit_msg() {
-	local msg="q: quit \t r: reload session \t h: go working dir"
+	local msg="
+	Runfile comes with ABSOLUTELY NO WARRANTY!
+	q: quit \t r: reload session \t h: go working dir"
 	rf_log_title "cmd(s)" "${msg}"
 }
 
