@@ -27,7 +27,7 @@ rf_check_update() {
 	rf_log "remote version: \t${rversion}"
 	[[ -z "${rversion}" ]] && rf_log "not found version value" && return
 
-	local lversion=$(cat "${REPOS_DIR}/version.txt")
+	local lversion=$(cat "${RF_REPOS_DIR}/version.txt")
 	rf_log "local version:  \t${lversion}"
 	if [[ "${rversion}" != "${lversion}" ]]; then
 		read -p "A new version is available. Do you want to update? [Y/n]" answer
@@ -47,7 +47,7 @@ rf_update() {
 		#local install
 		bash ${dir}/install.sh local
 	else
-		bash "${REPOS_DIR}/install.sh" update
+		bash "${RF_REPOS_DIR}/install.sh" update
 	fi
 }
 

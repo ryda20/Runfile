@@ -1,5 +1,5 @@
 #!/bin/bash
-RF_REPOS_DIR=${RF_REPOS_DIR:-~/.Runfile} # get RF_REPOS_DIR from ENV or using default value
+declare -r RF_REPOS_DIR=${RF_REPOS_DIR:-~/.Runfile} # get RF_REPOS_DIR from ENV or using default value
 source "${RF_REPOS_DIR}/vars"
 source "${RF_REPOS_DIR}/utils"
 
@@ -97,6 +97,8 @@ run help rf
 
 	[[ "${cmd}" == "alias" ]] && _fn_alias_list "${filter}" && return
 	[[ "${cmd}" == "rf" ]] && _fn_rf_list "${filter}" && return
+
+	[[ "${RF_MODE}" == "loop" ]] && _fn_exit_msg
 	_fn_rf_list
 	_fn_alias_list
 	_fn_user_list
@@ -133,11 +135,7 @@ __fn_list_check_normal () {
 }
 
 _fn_exit_msg() {
-	local msg="
-	q: quit
-	r: reload session
-	h: go working dir
-"
+	local msg="q: quit \t r: reload session \t h: go working dir"
 	rf_log_title "cmd(s)" "${msg}"
 }
 
@@ -145,7 +143,7 @@ _fn_exit_msg() {
 _fn_reload() {
 	clear
 	cd $RF_WORKING_DIR
-	exec bash -c "${RF_WORKING_DIR}/Runfile"
+	exec bash -c "${RF_WORKING_DIR}/Runfile loop"
 }
 
 # __fn_list_check_loop will check input command and validation before execute
@@ -353,7 +351,7 @@ __start_app() {
 	[[ "${RF_AUTO_UPDATE}" == "yes" ]] && rf_check_update
 	
 	# force loop mode: run with command: `run loop`
-	[[ "${1}" == "loop" ]] && rf_log "forcing running in loop mode" && __fn_list_check_loop && return
+	[[ "${1}" == "loop" ]] && rf_log "forcing running in loop mode" && RF_MODE="loop"
 	
 
 	local mode=${RF_MODE:-"loop"}

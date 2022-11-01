@@ -31,7 +31,7 @@ _rf_log_tab_replace() {
 rf_log() {
 	local str=${1}
 	local prefix=${2:-"# "}
-	local suffix=${3:-"#"}
+	local suffix=${3:-""}
 	str=` _rf_log_tab_replace "${str}" `
 	# some system dont show correctly color, so, i force to use
 	local line_width=${2:-${RF_LINE_WIDTH:-90}}
