@@ -10,7 +10,9 @@ _fn_str_prefix() {
 }
 
 rf_version() {
-	echo $(date '+%Y%m%d%H%M%S') > version.txt
+	local ver=$(date '+%Y%m%d%H%M%S')
+	rf_log "write verion: ${ver} to version.txt"
+	echo ${ver} > version.txt
 }
 
 
