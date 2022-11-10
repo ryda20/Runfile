@@ -28,28 +28,6 @@ _rf_log_tab_replace() {
 	echo -e "${1}" | sed 's/\t/    /g'
 }
 
-# you can set these parameters by appending -- <parameter> <value> like:
-# script.sh -- --arg1 value1 --arg2 value2
-_rf_parse_args(){
-# Parse command line parameters
-while [[ $# -gt 0 ]]; do
-	arg="$1"
-	case $arg in
-	--id)
-		_ctid=$2
-		shift
-		;;
-	--bridge)
-		_bridge=$2
-		shift
-		;;
-	*)
-		error "Unrecognized option $1"
-		;;
-	esac
-	shift
-done
-}
 
 rf_log() {
 	local str prefix suffix line_width
