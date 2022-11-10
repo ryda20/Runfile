@@ -11,6 +11,30 @@ _fn_str_prefix() {
 		# [[ $a == "z*" ]] # True if $a is equal to z* (literal matching).
 }
 
+step() {
+	# rf_log_step_title "step log test" "this is a function to test step log"
+	rf_log_step "step log test"
+	rf_log_step "Step 1: update packages ...."
+	for i in $(seq 1 5); do 
+		sleep 1
+		rf_log "updating package: $i"
+	done
+	rf_log_step_result "okay, done"
+	rf_log_step "Step 2: compiling ...."
+	for i in $(seq 1 5); do 
+		sleep 1
+		rf_log "compiling package: $i"
+	done
+	rf_log_step "result: okay, done"
+	rf_log_step "Step 3: installing ...."
+	for i in $(seq 1 5); do 
+		sleep 1
+		rf_log "installing package: $i"
+	done
+	rf_log_step_result "Finished"
+	rf_log_step_reset
+	rf_log_end
+}
 
 ex1() {
 	rf_log_prefix="build"
