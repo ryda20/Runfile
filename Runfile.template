@@ -352,6 +352,9 @@ __start_app() {
 	# check update
 	[[ "${RF_AUTO_UPDATE}" == "yes" ]] && rf_check_update
 	
+	# check and load if input is a file and shift the next value as cmd input
+	[[ -f "${1}" ]] && source "${1}" && shift
+
 	# force loop mode: run with command: `run loop`
 	[[ "${1}" == "loop" ]] && rf_log "forcing running in loop mode" && RF_MODE="loop"
 	
