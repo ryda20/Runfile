@@ -109,7 +109,6 @@ run help rf
 # run with command: `run task args`
 __fn_list_check_normal () {
 	local cmd="${1}";shift
-	local args="$@"
 
 	# if no input: ${#cmd} -eq 0. Nothing to check 
 	# -> show user functions only
@@ -124,10 +123,12 @@ __fn_list_check_normal () {
 	# check if $cmd is a valid command
 	if [[ -n $( command -v ${cmd} ) ]]; then
 		# execute the command with args
-		eval ${cmd} "${args}"
+		# note: protect input string with space
+		eval "${cmd} \"${@}\""
 	elif [[ -n $( command -v alias_${cmd} ) ]]; then
 		# execute alias function with args
-		eval alias_${cmd} "${args}"
+		# note: protect input string with space
+		eval "alias_${cmd} \"${@}\""
 	else
 		echo "command \"${cmd}\" couln't be found!"
 	fi
