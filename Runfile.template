@@ -322,7 +322,7 @@ _fn_list_all() {
 	
 	local str=""
 	local aliasfile description
-	local fn_skip_prefix=("_" "log" ${FN_SKIP})
+	local fn_skip_prefix=("_" "log" ${RF_FN_SKIP_PREFIX})
 	IFS=$IFS_ORI
 	for f in ${FN_NAME_LIST}; do
 		# [[ "${f:0:1}" == "_" ]] && continue #default skip prefix
