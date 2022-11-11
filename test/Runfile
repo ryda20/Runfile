@@ -17,19 +17,19 @@ step() {
 	rf_log_step "Step 1: update packages ...."
 	for i in $(seq 1 5); do 
 		sleep 1
-		rf_log "updating package: $i"
+		log "updating package: $i"
 	done
 	rf_log_step_result "okay, done"
 	rf_log_step "Step 2: compiling ...."
 	for i in $(seq 1 5); do 
 		sleep 1
-		rf_log "compiling package: $i"
+		log "compiling package: $i"
 	done
 	rf_log_step "result: okay, done"
 	rf_log_step "Step 3: installing ...."
 	for i in $(seq 1 5); do 
 		sleep 1
-		rf_log "installing package: $i"
+		log "installing package: $i"
 	done
 	rf_log_step_result "Finished"
 	rf_log_step_reset
@@ -37,8 +37,7 @@ step() {
 }
 
 ex1() {
-	rf_log_prefix="build"
-	rf_log_title "Example" "
+	log_title --title "Example" "
 Description:
 	Description about build function run build arg1 arg2 arg3
 Params:
@@ -57,7 +56,7 @@ Note:
 ex2() {
 	local cmd=${1}; shift
 	local args=${@}
-	# rf_log "cmd: ${cmd}, args: ${args}"
+	# log "cmd: ${cmd}, args: ${args}"
 	case ${cmd} in
 	gen)
 		_rf_ex2_gen ${args}
@@ -66,7 +65,7 @@ ex2() {
 		_rf_ex2_clean ${args}
 		;;
 	*)
-		rf_log_title "available cmd(s)" "
+		log_title --title "available cmd(s)" "
 	rf_ex2 gen [, go_out_dir = pb [, js_out_dir = pb [, proto_dir = .]]]
 		=> generate go/js/ts files from .proto files.
 	rf_ex2 clear|clean [, go_dir = pb [, js_dir = pb]]

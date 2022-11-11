@@ -13,7 +13,8 @@ declare -r ALIAS_FILE_LIST="$( find "${RF_REPOS_DIR}"/plugins -type f -name 'ali
 
 declare -r IFS_ORI=${IFS}
 
-
+# ex: "log private"
+FN_SKIP=""
 # tput Color Capabilities:
 #
 # tput setab [1-7] – Set a background color using ANSI escape

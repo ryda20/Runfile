@@ -11,7 +11,7 @@ _fn_str_prefix() {
 
 rf_version() {
 	local ver=$(date '+%Y%m%d%H%M%S')
-	rf_log "write verion: ${ver} to version.txt"
+	log "write verion: ${ver} to version.txt"
 	echo ${ver} > version.txt
 }
 
@@ -22,20 +22,20 @@ rf_check_update() {
 	#
 	local url="https://gitlab.com/ryda20/runfile/-/raw/master/version.txt"
 	local check_code=$(curl -o /dev/null --silent -Iw '%{http_code}' "${url}")
-	[[ "${check_code}" != "200" ]] && rf_log "not found version.txt file" && return
-	rf_log "http-code: ${check_code}"
+	[[ "${check_code}" != "200" ]] && log "not found version.txt file" && return
+	log "http-code: ${check_code}"
 	#
 	local rversion=$(curl -fsSL "${url}")
-	rf_log "remote version: \t${rversion}"
-	[[ -z "${rversion}" ]] && rf_log "not found version value" && return
+	log "remote version: \t${rversion}"
+	[[ -z "${rversion}" ]] && log "not found version value" && return
 
 	local lversion=$(cat "${RF_REPOS_DIR}/version.txt")
-	rf_log "local version:  \t${lversion}"
+	log "local version:  \t${lversion}"
 	if [[ "${rversion}" != "${lversion}" ]]; then
 		read -p "A new version is available. Do you want to update? [Y/n]" answer
-		[[ "${answer}" == "Y" ]] && rf_update || rf_log "nothing changed" && return
+		[[ "${answer}" == "Y" ]] && rf_update || log "nothing changed" && return
 	else
-		rf_log "You have latest version!"
+		log "You have latest version!"
 	fi
 	rf_log_end
 }
@@ -57,7 +57,7 @@ rf_update() {
 # wip - not completed
 _rf_copy_ex2() {
 	if [[ "$(pwd)" == "${RF_REPOS_DIR}" ]]; then
-		rf_log "do not copy tmpl fn to template Runfile"
+		log "do not copy tmpl fn to template Runfile"
 		exit 0
 	fi
 	
@@ -67,7 +67,7 @@ _rf_copy_ex2() {
 # wip - not completed
 _rf_copy_ex1() {
 	if [[ "$(pwd)" == "${RF_REPOS_DIR}" ]]; then
-		rf_log "do not copy tmpl fn to template Runfile"
+		log "do not copy tmpl fn to template Runfile"
 		exit 0
 	fi
 	
@@ -79,9 +79,9 @@ _rf_copy_ex1() {
 	sed -e "s|^##endregion USER.*$|\$\{copy\}\n&|" <${f}.tmp >${f} && \
 	rm -f ${f}.tmp
 	if [[ $? -eq 0 ]]; then
-		rf_log "sucessfully"
+		log "sucessfully"
 	else
-		rf_log "not sucessfully"
+		log "not sucessfully"
 		cp ${f}.tmp ${f}
 		rm ${f}.tmp
 	fi

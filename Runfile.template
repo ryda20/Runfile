@@ -1,5 +1,6 @@
 #!/bin/bash
 declare -r RF_REPOS_DIR=${RF_REPOS_DIR:-~/.Runfile} # get RF_REPOS_DIR from ENV or using default value
+source /dev/stdin <<< "$(curl -s https://raw.githubusercontent.com/ryda20/bashlog/master/log.sh)"
 source "${RF_REPOS_DIR}/vars"
 source "${RF_REPOS_DIR}/utils"
 
@@ -20,20 +21,20 @@ _fn_list() {
 	#
 	[[ -z "${FN_NAME_LIST}" ]] && FN_NAME_LIST=$(echo $( declare -F ) | sed 's/declare -f //g')
 	#
-	rf_debug "list_by: ${list_by}"
+	log_debug "list_by: ${list_by}"
 	#
 	local saveIFS=$IFS && IFS=$SEP
 	for fname in ${FN_NAME_LIST}; do
 		if [[ "${list_by}" == "user" ]]; then
 			# skip rf_ and alias_
-			[[ "${fname:0:3}" == "rf_" ]] && rf_debug "skip fname: ${fname}" && continue
-			[[ "${fname:0:6}" == "alias_" ]] && rf_debug "skip fname: ${fname}" &&continue
+			[[ "${fname:0:3}" == "rf_" ]] && log_debug "skip fname: ${fname}" && continue
+			[[ "${fname:0:6}" == "alias_" ]] && log_debug "skip fname: ${fname}" &&continue
 		else
 			# fname != "user" and != list_by -> skip
-			[[ "${fname:0:${#list_by}}" != "${list_by}" ]] && rf_debug "skip fname: ${fname}" && continue
+			[[ "${fname:0:${#list_by}}" != "${list_by}" ]] && log_debug "skip fname: ${fname}" && continue
 		fi
 		# remove alias_ prefix if have
-		[[ "${fname:0:6}" == "alias_" ]] && fname="$( echo ${fname} | sed 's|alias_||' )" && rf_debug "remove alias_ prefix"
+		[[ "${fname:0:6}" == "alias_" ]] && fname="$( echo ${fname} | sed 's|alias_||' )" && log_debug "remove alias_ prefix"
 		# add to arr
 		arr[${arr_len}]="${fname}"
 		arr_len=$(( arr_len + 1 ))
@@ -42,7 +43,7 @@ _fn_list() {
 	done && IFS=$saveIFS
 	#
 	if [[ ${arr_len} -eq 0 ]]; then
-		rf_log "Not found any fn by \"${list_by}\""
+		log "Not found any fn by \"${list_by}\""
 		return;
 	fi
 	#
@@ -65,10 +66,10 @@ _fn_list() {
 	done
 	fnList="${fnList%${SEP}}" # remove 2 chars at end of string out '\n', or using: ${out%??}
 	
-	rf_debug "padding: ${padding}, columns: ${columns}, row len: ${rowLen}"
+	log_debug "padding: ${padding}, columns: ${columns}, row len: ${rowLen}"
 	
 	line_width=$(( padding * columns ))
-	rf_log_title "${list_by} fn(s)" "${fnList}" ${line_width}
+	log_title --title "${list_by} fn(s)" --line_width ${line_width} "${fnList}"
 }
 
 _fn_user_list() {
@@ -137,7 +138,7 @@ _fn_exit_msg() {
 	local msg="
 	Runfile comes with ABSOLUTELY NO WARRANTY!
 	q: quit \t r: reload session \t h: go working dir"
-	rf_log_title "cmd(s)" "${msg}"
+	log_title --title "cmd(s)" "${msg}"
 }
 
 
@@ -321,10 +322,18 @@ _fn_list_all() {
 	
 	local str=""
 	local aliasfile description
-	#
+	local fn_skip_prefix=("_" "log" ${FN_SKIP})
 	IFS=$IFS_ORI
 	for f in ${FN_NAME_LIST}; do
-		[[ "${f:0:1}" == "_" ]] && continue
+		# [[ "${f:0:1}" == "_" ]] && continue #default skip prefix
+		# [[ "${f:0:3}" == "log" ]] && continue
+		
+		
+		for s in ${fn_skip_prefix[@]}; do
+			# echo "working on $s, ${f:0:${#s}}"
+			[[ "${f:0:${#s}}" == "${s}" ]] && continue 2
+		done
+
 		if [[ "${f:0:6}" == "alias_" ]]; then
 			# how?
 			# find a alias file in plugins dir and echo it path to cat out content,
@@ -344,7 +353,7 @@ _fn_list_all() {
 
 # __start_app must to call this function at the end of user Runfile
 __start_app() {
-	# rf_log "working dir: $(pwd), input1: ${1}"
+	# log "working dir: $(pwd), input1: ${1}"
 	# check and load if input is a file and shift the next value as cmd input
 	[[ -f "${1}" ]] && source "${1}" && shift
 
@@ -358,7 +367,7 @@ __start_app() {
 	
 
 	# force loop mode: run with command: `run loop`
-	[[ "${1}" == "loop" ]] && rf_log "forcing running in loop mode" && RF_MODE="loop"
+	[[ "${1}" == "loop" ]] && log "forcing running in loop mode" && RF_MODE="loop"
 	
 
 	local mode=${RF_MODE:-"loop"}

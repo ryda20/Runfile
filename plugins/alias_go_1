@@ -100,8 +100,8 @@ rf_go_test() {
 
 	str="${str%'\n'}"
 	
-	rf_log_title "commands" "${str}" "no"
-	rf_log " Press qq to exit"
+	log_title --title "commands" "${str}"
+	log " Press qq to exit"
 
 	while : ; do
 		# doc 2 ky tu, wait 15s
@@ -127,8 +127,8 @@ rf_go_test() {
 			*)
 				clear
 				echo -e "${str}"
-				rf_log_title "commands" "${str}" "no"
-				rf_log " Press qq to exit"
+				log_title --title "commands" "${str}"
+				log " Press qq to exit"
 				;;
 		esac
 	done
