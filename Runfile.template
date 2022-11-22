@@ -21,20 +21,20 @@ _fn_list() {
 	#
 	[[ -z "${FN_NAME_LIST}" ]] && FN_NAME_LIST=$(echo $( declare -F ) | sed 's/declare -f //g')
 	#
-	log_debug "list_by: ${list_by}"
+	__log_debug "list_by: ${list_by}"
 	#
 	local saveIFS=$IFS && IFS=$SEP
 	for fname in ${FN_NAME_LIST}; do
 		if [[ "${list_by}" == "user" ]]; then
 			# skip rf_ and alias_
-			[[ "${fname:0:3}" == "rf_" ]] && log_debug "skip fname: ${fname}" && continue
-			[[ "${fname:0:6}" == "alias_" ]] && log_debug "skip fname: ${fname}" &&continue
+			[[ "${fname:0:3}" == "rf_" ]] && __log_debug "skip fname: ${fname}" && continue
+			[[ "${fname:0:6}" == "alias_" ]] && __log_debug "skip fname: ${fname}" &&continue
 		else
 			# fname != "user" and != list_by -> skip
-			[[ "${fname:0:${#list_by}}" != "${list_by}" ]] && log_debug "skip fname: ${fname}" && continue
+			[[ "${fname:0:${#list_by}}" != "${list_by}" ]] && __log_debug "skip fname: ${fname}" && continue
 		fi
 		# remove alias_ prefix if have
-		[[ "${fname:0:6}" == "alias_" ]] && fname="$( echo ${fname} | sed 's|alias_||' )" && log_debug "remove alias_ prefix"
+		[[ "${fname:0:6}" == "alias_" ]] && fname="$( echo ${fname} | sed 's|alias_||' )" && __log_debug "remove alias_ prefix"
 		# add to arr
 		arr[${arr_len}]="${fname}"
 		arr_len=$(( arr_len + 1 ))
@@ -66,7 +66,7 @@ _fn_list() {
 	done
 	fnList="${fnList%${SEP}}" # remove 2 chars at end of string out '\n', or using: ${out%??}
 	
-	log_debug "padding: ${padding}, columns: ${columns}, row len: ${rowLen}"
+	__log_debug "padding: ${padding}, columns: ${columns}, row len: ${rowLen}"
 	
 	line_width=$(( padding * columns ))
 	log_title --title "${list_by} fn(s)" --line_width ${line_width} "${fnList}"
